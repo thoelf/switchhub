@@ -11,3 +11,5 @@ Here follows a list of some of the important characteristics of SwitchHub:
 - SwitchHub is intended to run unattended as a server daemon. Once configured, SwitchHub will be out of your way.
 - SwitchHub does not have a GUI. You will edit text files (there is four of them) to configure SwitchHub and the events.
 - SwitchHub is written in Python 3. This is only of interest if you want to read the code or make changes to it.
+
+For more information, refer to SwitchHub.pdf and the list of issues.
