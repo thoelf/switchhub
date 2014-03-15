@@ -1,8 +1,7 @@
 *.odt
-*.svn
+*.svg
 *.png
 backlog
-
 *.py[cod]
 
 # C extensions
