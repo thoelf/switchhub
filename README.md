@@ -1,4 +1,5 @@
-#What is SwitchHub?
+#SwitchHub
+##Introduction
 SwitchHub is a command line application for Linux (exclusively for the time being) that allows flexible control of the [Telldus Tellstick](http://www.telldus.se/products/tellstick). The Telldus Tellstick is a device that can be controlled from a computer to control power switches (i.e. remote socket receivers) remotely. SwitchHub can be easily adopted to control other similar devices.
 
 The scheduling of events (i.e. scheduling switches to turn on or off) is made by creating Boolean
@@ -16,3 +17,6 @@ Here are some of the important characteristics of SwitchHub:
 - SwitchHub is written in Python 3. This is only of interest if you want to read the code or make changes to it.
 
 For more information, refer to SwitchHub.pdf and to the list of [issues](https://github.com/thoelf/switchhub/issues).
+
+##Status
+The program seems to work very well, but everything is not thoroughly tested yet. There are also some important functions to be implemented.
