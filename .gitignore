@@ -1,7 +1,8 @@
 *.odt
 *.svg
 *.png
-backlog
+_events.cfg
+_program.cfg
 *.py[cod]
 
 # C extensions
