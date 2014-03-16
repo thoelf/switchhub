@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Thomas Elfström
+# Copyright 2014 Thomas Elfström
 # switchhub.py
 
 ''' This file is part of SwitchHub.
