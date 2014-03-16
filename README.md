@@ -3,7 +3,7 @@
 SwitchHub is a command line application for Linux (exclusively for the time being) that allows flexible control of the [Telldus Tellstick](http://www.telldus.se/products/tellstick). The Telldus Tellstick is a device that can be controlled from a computer to control power switches (i.e. remote socket receivers) remotely. SwitchHub can be easily adopted to control other similar devices.
 
 The scheduling of events (i.e. scheduling switches to turn on or off) is made by creating Boolean
-expressions, one per switch. An event defintion can look like this:
+expressions, one per switch. An event definition can look like this:
 
 *on = "06:00" <= t < "07:15" and sundown*
 
