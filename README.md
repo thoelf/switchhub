@@ -16,7 +16,7 @@ Here are some of the important characteristics of SwitchHub:
 - SwitchHub does not have a GUI. You will edit text files (there is four of them) to configure SwitchHub and the events.
 - SwitchHub is written in Python 3. This is only of interest if you want to read the code or make changes to it.
 
-For more information, refer to SwitchHub.pdf and to the list of [issues](https://github.com/thoelf/switchhub/issues).
+For more information, refer to [SwitchHub.pdf](https://github.com/thoelf/switchhub/blob/master/SwitchHub.pdf) and to the list of [issues](https://github.com/thoelf/switchhub/issues).
 
 ##Status
 The program seems to work very well, but everything is not thoroughly tested yet. There are also some important functions to be implemented.
