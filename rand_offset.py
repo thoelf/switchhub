@@ -83,5 +83,6 @@ def calc(s, randtime, sunuptime, sundowntime):
 		s = replace_words(s, r_time)
 		s = s.replace("first_min", "00:00")
 		s = s.replace("last_min", "23:59")
+
 	return s
 
