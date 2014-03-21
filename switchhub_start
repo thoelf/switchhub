@@ -1,0 +1,2 @@
+#!/bin/bash
+screen /opt/switchhub/switchhub.py
