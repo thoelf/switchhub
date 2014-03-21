@@ -1,0 +1,2 @@
+#!/bin/bash
+kill $(pgrep -f switchhub) 2>/dev/null
