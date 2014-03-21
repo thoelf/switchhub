@@ -49,6 +49,7 @@ fi
 printf "Press any key to continue the installation or Ctrl+C to quit."
 read
 
+GEXIST=false
 getent group switchhub >/dev/null 2>&1 && GEXIST="true"
 if [ "$GEXIST" == "false" ]; then
     sudo groupadd switchhub
@@ -58,23 +59,26 @@ sudo usermod -a -G switchhub $USERNAME
 cd
 mv -v switchhub-master switchhub
 
-if [ !- d "/etc/switchhub" ]; then
+if [ ! -d "/etc/switchhub" ]; then
     sudo mkdir /etc/switchhub
 fi
 
 sudo mv -v ./switchhub/{events.cfg,free_days.cfg,holidays.cfg,program.cfg} /etc/switchhub
-chgrp switchhub /etc/switchhub/*
+sudo chgrp switchhub /etc/switchhub/*
 chmod g+w /etc/switchhub/*
 
 mv -v ./switchhub/{switchhub_start,switchhub_stop} .
 chown $USERNAME:$USERNAME /home/$USERNAME/{switchhub_start,switchhub_stop}
 chmod u+x switchhub_start switchhub_stop
-mv
-sudo mv -v switchhub /opt #funkar bara om katalogen inte redan finns där
+
+if [ -d "$INSTALL_DIR" ]; then
+    sudo rm -rf $INSTALL_DIR
+fi
+sudo mv -v switchhub /opt
 sudo chown root:root $INSTALL_DIR
 
 cd $INSTALL_DIR
-chgrp -R switchhub *
+sudo chgrp -R switchhub *
 chmod -R g+w *
 chmod g+x switchhub.py
 
