@@ -27,11 +27,6 @@ INSTALL_DIR=/opt/switchhub
 LOG_FILE=/var/log/switchhub
 USERNAME=$(whoami)
 
-printf "This is required during the installation:\n    * Internet connection (to download SwitchHub)."
-if [ "$USERNAME" != "root" ]; then
-    printf "\n    * The root password (to make changes that require root permissions).\n\n"
-fi
-
 if [ "$USERNAME" == "root" ]; then
     printf "\n\nFor which user are you installing SwitchHub? "
     read USERNAME
@@ -47,30 +42,41 @@ if [ "$USERNAME" == "root" ]; then
     printf "\n"
 fi
 
-printf "You are about to install SwitchHub for user $USERNAME.\n"
+printf "You are about to install SwitchHub for user $USERNAME. "
+if [ "$USERNAME" != "root" ]; then
+    printf "The root password will be required\nto make changes that require root permission.\n\n"
+fi
 printf "Press any key to continue the installation or Ctrl+C to quit."
 read
 
-sudo groupadd switchhub
+getent group switchhub >/dev/null 2>&1 && GEXIST="true"
+if [ "$GEXIST" == "false" ]; then
+    sudo groupadd switchhub
+fi
 sudo usermod -a -G switchhub $USERNAME
 
 cd
 mv -v switchhub-master switchhub
 
-sudo mkdir /etc/switchhub
-sudo mv -v ./switchhub/{events.cfg, free_days.cfg, holidays.cfg, program.cfg} /etc/switchhub
-sudo chgrp switchhub /etc/switchhub/*
-sudo chmod g+w /etc/switchhub/*
+if [ !- d "/etc/switchhub" ]; then
+    sudo mkdir /etc/switchhub
+fi
 
-mv -v ./switchhub/{switchhub_start, switchhub_stop} .
-sudo chown $USERNAME:$USERNAME /home/$USERNAME/{switchhub_start, switchhub_stop}
+sudo mv -v ./switchhub/{events.cfg,free_days.cfg,holidays.cfg,program.cfg} /etc/switchhub
+chgrp switchhub /etc/switchhub/*
+chmod g+w /etc/switchhub/*
+
+mv -v ./switchhub/{switchhub_start,switchhub_stop} .
+chown $USERNAME:$USERNAME /home/$USERNAME/{switchhub_start,switchhub_stop}
 chmod u+x switchhub_start switchhub_stop
+mv
+sudo mv -v switchhub /opt #funkar bara om katalogen inte redan finns där
+sudo chown root:root $INSTALL_DIR
 
-sudo mv -v switchhub /opt
 cd $INSTALL_DIR
-sudo chgrp -R switchhub *
-sudo chmod -R g+w *
-sudo chmod g+x switchhub.py
+chgrp -R switchhub *
+chmod -R g+w *
+chmod g+x switchhub.py
 
 sudo cp -v switchhub_logrotate /etc/logrotate.d/switchhub
 echo "Refer to /etc/logrotate.d/switchhub for the configuration of log rotation." > switchhub_logrotate
