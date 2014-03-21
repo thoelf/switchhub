@@ -36,49 +36,33 @@ import rand_offset
 
 
 def main():
-	# Check the command line  arguments
-	if len(sys.argv) == 1:
-		sim = False
-	elif len(sys.argv) == 2:
-		if sys.argv[1] == "-s":
-			sim = True
-			print("Simulation mode activated")
-		else:
-			print ('Usage: switchhub [-s]')
-			sys.exit()
-	else:
-		print ('Usage: switchhub [-s]')
-		sys.exit()
 
 	# Initialize config parser for program.cfg
 	confprg = configparser.ConfigParser()
 #	confprg.read("program.cfg")
-	confprg.readfp(codecs.open("program.cfg", "r", "utf8"))
+	confprg.readfp(codecs.open("/etc/switchhub/program.cfg", "r", "utf8"))
 
 	# Initialize config parser for events.cfg
 	confev = configparser.ConfigParser(allow_no_value = True)
 #	confev.read("events.cfg")
-	confev.readfp(codecs.open("events.cfg", "r", "utf8"))
+	confev.readfp(codecs.open(confprg['misc']['event_config'] + "events.cfg", "r", "utf8"))
 
-	with open("free_days.cfg", "r") as f:
+	with open("/etc/switchhub/free_days.cfg", "r") as f:
 		free_days = f.read()
 
 #	with open("holidays.cfg", "r") as f:
 #		holidays = f.read()
-	with codecs.open("holidays.cfg", "r", "utf8") as f:
+	with codecs.open("/etc/switchhub/holidays.cfg", "r", "utf8") as f:
 		holidays = f.read()
 
-#	if not path.isdir(confprg['paths']['workdir']):
-#		os.mkdir(confprg['paths']['workdir'])
-
 	# Initialize logging
-	logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d  %H:%M:%S', filename='/var/log/switchhub') #, level=logging.DEBUG)
+	logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
+		datefmt='%Y-%m-%d %H:%M:%S',
+		filename="/var/log/switchhub.log")
 	logger = logging.getLogger(__name__)
 	logger.setLevel(confprg['logging']['log_level'])
-#	logger = logging.getLogger('switchhub')
+
 	logger.info('SwitchHub started')
-
-
 	first_run = True
 	data_read = False
 #	verbose = True if (confprg['misc']['verbose'].lower() == "yes" or sim == True) else False
@@ -90,6 +74,7 @@ def main():
 	ping = {}
 	ping_timer = {}
 	random = {}
+	sim = False
 	thread = {}
 	for host in confprg['ping_ip']:
 		ping_timer[host] = 0
@@ -105,6 +90,8 @@ def main():
 		except KeyError:
 			random[key] = 0
 
+	print("SwitchHub started.\n")
+	print("If you started SwitchHub with switchhub_start,\npress Ctrl+A+D to detach SwitchHub from the terminal.\n")
 
 	while True:
 		now = datetime.now()
@@ -198,7 +185,7 @@ def main():
 				cmd = "tdtool " + sstate + " " + que[item].split(';')[0] + " > /dev/null"
 				logger.info('%s %s', item, sstate.replace('-', ''))
 #				if verbose:
-#					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + sstate.replace('-', ''))
+				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + sstate.replace('-', ''))
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
 				thread[item].start()
 			old_state[item] = que[item].split(';')[0] + ";" + str(state)
@@ -210,7 +197,7 @@ def main():
 			if state:
 				logger.info('%s on', item)
 #				if verbose:
-#					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "on")
+				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "on")
 				cmd = "tdtool --on " + que_only_on[item].split(';')[0] + " > /dev/null"
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
 				thread[item].start()
@@ -222,7 +209,7 @@ def main():
 			if state:
 				logger.info('%s off', item)
 #				if verbose:
-#					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "off")
+				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "off")
 				cmd = "tdtool --off " + que_only_off[item].split(';')[0] + " > /dev/null"
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
 				thread[item].start()
