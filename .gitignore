@@ -1,7 +1,7 @@
-install.sh
 *.odt
 *.svg
 *.png
+_install.sh
 _events.cfg
 _program.cfg
 *.py[cod]
