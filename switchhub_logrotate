@@ -1,0 +1,8 @@
+/var/log/switchhub.log {
+	rotate 5
+        size 10k
+        compress
+        missingok
+        notifempty
+        create 660 root switchhub
+}
