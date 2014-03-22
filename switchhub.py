@@ -91,7 +91,7 @@ def main():
 			random[key] = 0
 
 	print("SwitchHub started.\n")
-	print("If you started SwitchHub with switchhub_start,\npress Ctrl+A D to detach SwitchHub from the terminal.\n")
+	print("If you started SwitchHub with switchhub_start.sh,\npress Ctrl+A D to detach SwitchHub from the terminal.\n")
 
 	while True:
 		now = datetime.now()
