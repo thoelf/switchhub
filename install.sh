@@ -31,9 +31,10 @@ fi
 INSTALL_DIR=/opt/switchhub/
 LOG_FILE=/var/log/switchhub.log
 SETTINGS_DIR=/etc/switchhub/
+STARTDIR=$(pwd)
 
 printf "You are about to install SwitchHub. "
-printf "Press any key to continue the installation or Ctrl+C to quit."
+printf "Press any key to continue the installation\nor Ctrl+C to quit."
 read
 
 GEXIST=false
@@ -44,7 +45,7 @@ if [ "$GEXIST" == "false" ]; then
 fi
 
 cd ..
-mv -v switchhub-master switchhub
+mv -v $STARTDIR switchhub
 
 if [ ! -d "/etc/switchhub" ]; then
     mkdir $SETTINGS_DIR
