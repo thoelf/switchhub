@@ -1,0 +1,22 @@
+#!/bin/bash
+
+RESULT="SwitchHub is running.\n"
+ps aux|grep switchhub|grep -vE '(grep|switchhub_status)' >/dev/null||RESULT="SwitchHub is not running.\n"
+printf "$RESULT"
+
+ROWS=$(tail /var/log/switchhub.log | wc -l)
+if (( $ROWS > 0 )); then
+    if (( $ROWS >= 10 )); then
+        printf "The latest 10 log messages:\n"
+    elif (( $ROWS == 1 )); then
+        printf "The latest log message:\n"
+    else
+        printf "The latest $ROWS log messages:\n"
+    fi
+    tail /var/log/switchhub.log
+else
+    printf "There is nothing in the log yet.\n"
+fi
+
+
+
