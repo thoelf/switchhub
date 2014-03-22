@@ -18,7 +18,7 @@
 # along with SwitchHub. If not, see <http://www.gnu.org/licenses/>.
 
 
-resize -s 24 86 &> /dev/null
+#resize -s 30 92 &> /dev/null
 
 echo -ne "\033]0;SwitchHub installation\007"
 clear
@@ -29,7 +29,7 @@ if [ $(id -u) -ne 0 ]; then
 fi
 
 INSTALL_DIR=/opt/switchhub/
-LOG_FILE=/var/log/switchhub
+LOG_FILE=/var/log/switchhub.log
 SETTINGS_DIR=/etc/switchhub/
 
 printf "You are about to install SwitchHub. "
@@ -40,13 +40,15 @@ GEXIST=false
 getent group switchhub >/dev/null 2>&1 && GEXIST="true"
 if [ "$GEXIST" == "false" ]; then
     groupadd switchhub
+    printf "\nAdded the group switchhub.\n"
 fi
 
-cd
+cd ..
 mv -v switchhub-master switchhub
 
 if [ ! -d "/etc/switchhub" ]; then
     mkdir $SETTINGS_DIR
+    printf "Created the directory $SETTINGS_DIR"
 fi
 
 mv -v ./switchhub/{events.cfg,free_days.cfg,holidays.cfg,program.cfg} $SETTINGS_DIR
@@ -58,8 +60,11 @@ chmod u+x switchhub_start switchhub_stop
 
 if [ -d "$INSTALL_DIR" ]; then
     rm -rf $INSTALL_DIR
+    printf "Removed old install directory $INSTALL_DIR\n"
 fi
+
 mv -v switchhub /opt
+printf "Created new install directort $INSTALL_DIR\n"
 chown root:root $INSTALL_DIR
 
 cd $INSTALL_DIR
@@ -70,11 +75,15 @@ chmod g+x switchhub.py
 cp -v switchhub_logrotate /etc/logrotate.d/switchhub
 echo "Refer to /etc/logrotate.d/switchhub for the configuration of log rotation." > switchhub_logrotate
 
-touch $LOG_FILE
+if [ ! -f "$LOG_FILE" ]; then
+    touch $LOG_FILE
+    printf "Created $LOG_FILE"
+fi
+
 chgrp switchhub $LOG_FILE
 chmod g+w $LOG_FILE
 
-printf "\nThe installation was succesful!\n"
+printf "\nThe installation was succesful! \n"
 printf "The installation directory is: $INSTALL_DIR\n"
 printf "The configuration files are in the directory /etc/switchhub.\n"
 printf "The log file is: $LOG_FILE\n"
