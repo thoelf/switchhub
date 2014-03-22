@@ -28,9 +28,9 @@ if [ $(id -u) -ne 0 ]; then
     exit 1
 fi
 
-INSTALL_DIR=/opt/switchhub/
+INSTALL_DIR=/opt/switchhub
 LOG_FILE=/var/log/switchhub.log
-SETTINGS_DIR=/etc/switchhub/
+SETTINGS_DIR=/etc/switchhub
 STARTDIR=$(pwd)
 
 printf "You are about to install SwitchHub. "
@@ -45,6 +45,7 @@ if [ "$GEXIST" == "false" ]; then
 fi
 
 cd ..
+
 mv -v $STARTDIR switchhub
 
 if [ ! -d "/etc/switchhub" ]; then
@@ -53,8 +54,8 @@ if [ ! -d "/etc/switchhub" ]; then
 fi
 
 mv -v ./switchhub/{events.cfg,free_days.cfg,holidays.cfg,program.cfg} $SETTINGS_DIR
-chgrp switchhub $SETTINGS_DIR*
-chmod g+w $SETTINGS_DIR*
+chgrp switchhub $SETTINGS_DIR/*
+chmod g+w $SETTINGS_DIR/*
 
 mv -v ./switchhub/{switchhub_start,switchhub_status,switchhub_stop} .
 chmod u+x switchhub_start switchhub_status switchhub_stop
@@ -68,10 +69,9 @@ mv -v switchhub /opt
 printf "Created new install directory $INSTALL_DIR\n"
 chown root:root $INSTALL_DIR
 
-cd $INSTALL_DIR
-chgrp -R switchhub *
-chmod -R g+w *
-chmod g+x switchhub.py
+chgrp -R switchhub $INSTALL_DIR/*
+chmod -R g+w $INSTALL_DIR/*
+chmod g+x $INSTALL_DIR/switchhub.py
 
 mv -v switchhub_logrotate /etc/logrotate.d/switchhub
 
@@ -83,13 +83,10 @@ fi
 chgrp switchhub $LOG_FILE
 chmod g+w $LOG_FILE
 
-cd
-
-printf "\nThe installation was succesful! \n"
 printf "The installation directory is: $INSTALL_DIR\n"
 printf "The configuration files are in the directory /etc/switchhub.\n"
 printf "The log file is: $LOG_FILE\n"
-printf "The configuration file for log rotation was moved to /etc/logrotate.d/switchhub\n"
+printf "The configuration file for log rotation is /etc/logrotate.d/switchhub\n"
 printf "The group switchhub was created.\n\n"
 printf "Press any key to quit."
 read
