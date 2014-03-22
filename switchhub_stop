@@ -1,2 +1,10 @@
 #!/bin/bash
-kill $(pgrep -f switchhub) 2>/dev/null
+
+STATUS="on"
+ps aux|grep switchhub|grep -vE '(grep|switchhub_stop)' >/dev/null||STATUS="off"
+if [ "$STATUS" == "on" ]; then
+    printf "SwitchHub was stopped.\n"
+    pkill -f switchhub 2>/dev/null
+else
+    printf "SwitchHub has already been stopped.\n"
+fi
