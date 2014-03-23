@@ -1,8 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#Copyright 2014 Thomas Elfström
+#switchhub_stop
+
+# This file is part of SwitchHub.
+
+# SwitchHub is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# SwitchHub is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with SwitchHub. If not, see <http://www.gnu.org/licenses/>.
+
 
 STATUS="on"
 ps aux|grep switchhub|grep -vE '(grep|switchhub_stop)' >/dev/null||STATUS="off"
-if [ "$STATUS" == "on" ]; then
+
+if [[ "$STATUS" = "on" ]]; then
     printf "SwitchHub was stopped.\n"
     pkill -f switchhub 2>/dev/null
 else
