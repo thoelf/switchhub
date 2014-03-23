@@ -83,8 +83,9 @@ if [[ -d "$INSTALL_DIR" ]]; then
     printf "Removed old install directory "$INSTALL_DIR"\n"
 fi
 
-cp -vr "$STARTDIR" /opt
+mkdir -p $INSTALL_DIR
 printf "Created new program directory "$INSTALL_DIR"\n"
+cp -vr "$STARTDIR" $INSTALL_DIR
 chown root:root "$INSTALL_DIR"
 
 chgrp -R switchhub "$INSTALL_DIR"/*
@@ -92,7 +93,7 @@ chmod -R g+w "$INSTALL_DIR"/*
 chmod g+x "$INSTALL_DIR"/switchhub.py
 
 if [[ ! -f "$LOG_FILE" ]]; then
-    touch $LOG_FILE
+    touch "$LOG_FILE"
     printf "Created "$LOG_FILE""
 fi
 
@@ -105,6 +106,6 @@ printf "The installation directory is: "$INSTALL_DIR"\n"
 printf "The configuration files are in the directory /etc/switchhub.\n"
 printf "The log file is: "$LOG_FILE"\n"
 printf "The configuration file for log rotation is /etc/logrotate.d/switchhub\n"
-printf "The group switchhub was created and $USER is now a member of that group.\n\n"
+printf "The group switchhub was created and "$USER" is now a member of that group.\n\n"
 printf "Press any key to quit. "
 read
