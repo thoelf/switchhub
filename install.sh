@@ -18,12 +18,12 @@
 # along with SwitchHub. If not, see <http://www.gnu.org/licenses/>.
 
 
-resize -s 30 92 &> /dev/null
+resize -s 42 92 &> /dev/null
 
 echo -ne "\033]0;SwitchHub installation\007"
 clear
 
-if [[ "$(id -u)" -ne 0 ]]; then
+if [[ $(id -u) -ne 0 ]]; then
     printf "Error: Run as root or with sudo.\n"
     exit 1
 fi
@@ -34,24 +34,21 @@ SETTINGS_DIR=/etc/switchhub
 STARTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 USER=$(logname)
 
-printf "You are about to install SwitchHub for user "$USER."\nEnter 'C' to change user or any other key to continue. "
+printf "You are about to install SwitchHub for user $USER.\nEnter 'C' to change user or any other key to continue. "
 read ANSWER
 if [[ "$ANSWER" = [cC] ]]; then
-    printf "\nFor which user are you installing SwitchHub? "
+    printf "\nFor which user do you want to install SwitchHub? "
     read USER
     UEXIST="false"
     while [[ "$UEXIST" = "false" ]] || [[ "$USER" = "" ]]; do
         getent passwd "$USER" >/dev/null 2>&1 && UEXIST="true"
         if [ "$UEXIST" = "false" ] || [[ "$USER" = "" ]]; then
-            printf "Error: User "$USER" does not exist!"
+            printf "Error: User $USER does not exist!"
             printf "\n\nFor which user are you installing SwitchHub? "
             read USER
         fi
     done
 fi
-
-#printf "Press any key to continue the installation\nor Ctrl+C to quit."
-#read
 
 GEXIST=false
 getent group switchhub >/dev/null 2>&1 && GEXIST="true"
@@ -71,20 +68,20 @@ chgrp switchhub "$SETTINGS_DIR"/*
 chmod g+w "$SETTINGS_DIR"/*
 
 chmod u+x switchhub_start switchhub_status switchhub_stop
-mv -v switchhub_start switchhub_status switchhub_stop /home/$USER
+cp -v switchhub_start switchhub_status switchhub_stop /home/$USER
 
 if [[ ! -d "$SETTINGS_DIR" ]]; then
     mkdir -p "$SETTINGS_DIR"
-    printf "Created the directory "$SETTINGS_DIR""
+    printf "Created the directory $SETTINGS_DIR."
 fi
 
 if [[ -d "$INSTALL_DIR" ]]; then
     rm -rf "$INSTALL_DIR"
-    printf "Removed old install directory "$INSTALL_DIR"\n"
+    printf "Removed old install directory $INSTALL_DIR.\n"
 fi
 
 mkdir -p $INSTALL_DIR
-printf "Created new program directory "$INSTALL_DIR"\n"
+printf "Created new program directory $INSTALL_DIR.\n"
 cp -vr $STARTDIR/* $INSTALL_DIR
 chown root:root "$INSTALL_DIR"
 
@@ -94,7 +91,7 @@ chmod g+x "$INSTALL_DIR"/switchhub.py
 
 if [[ ! -f "$LOG_FILE" ]]; then
     touch "$LOG_FILE"
-    printf "Created "$LOG_FILE""
+    printf "Created $LOG_FILE."
 fi
 
 chgrp switchhub "$LOG_FILE"
@@ -102,10 +99,10 @@ chmod g+w "$LOG_FILE"
 
 sudo usermod -a -G switchhub "$USER"
 
-printf "The installation directory is: "$INSTALL_DIR"\n"
+printf "\nThe installation directory is $INSTALL_DIR.\n"
 printf "The configuration files are in the directory /etc/switchhub.\n"
-printf "The log file is: "$LOG_FILE"\n"
-printf "The configuration file for log rotation is /etc/logrotate.d/switchhub\n"
-printf "The group switchhub was created and "$USER" is now a member of that group.\n\n"
+printf "The log file is $LOG_FILE.\n"
+printf "The configuration file for log rotation is /etc/logrotate.d/switchhub.\n"
+printf "The group switchhub was created and $USER is now a member of that group.\n\n"
 printf "Press any key to quit. "
 read
