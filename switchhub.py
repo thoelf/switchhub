@@ -27,6 +27,7 @@ from subprocess import Popen
 import sys
 from threading import Thread
 import time
+import logging
 
 import get_cal_data
 import get_holiday
@@ -35,44 +36,36 @@ import rand_offset
 
 
 def main():
-	# Check the command line  arguments
-	if len(sys.argv) == 1:
-		sim = False
-	elif len(sys.argv) == 2:
-		if sys.argv[1] == "-s":
-			sim = True
-			print("Simulation mode activated")
-		else:
-			print ('Usage: switchhub [-s]')
-			sys.exit()
-	else:
-		print ('Usage: switchhub [-s]')
-		sys.exit()
 
-	now = datetime.now()
-	print(now.strftime("%Y-%m-%d %H:%M") + "\tSwitchHub started")
-
+	# Initialize config parser for program.cfg
 	confprg = configparser.ConfigParser()
 #	confprg.read("program.cfg")
-	confprg.readfp(codecs.open("program.cfg", "r", "utf8"))
+	confprg.readfp(codecs.open("/etc/switchhub/program.cfg", "r", "utf8"))
 
+	# Initialize config parser for events.cfg
 	confev = configparser.ConfigParser(allow_no_value = True)
 #	confev.read("events.cfg")
-	confev.readfp(codecs.open("events.cfg", "r", "utf8"))
+	confev.readfp(codecs.open(confprg['misc']['event_config'] + "events.cfg", "r", "utf8"))
 
-	with open("free_days.cfg", "r") as f:
+	with open("/etc/switchhub/free_days.cfg", "r") as f:
 		free_days = f.read()
 
 #	with open("holidays.cfg", "r") as f:
 #		holidays = f.read()
-	with codecs.open("holidays.cfg", "r", "utf8") as f:
+	with codecs.open("/etc/switchhub/holidays.cfg", "r", "utf8") as f:
 		holidays = f.read()
 
-	if not path.isdir(confprg['paths']['workdir']):
-		os.mkdir(confprg['paths']['workdir'])
+	# Initialize logging
+	logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
+		datefmt='%Y-%m-%d %H:%M:%S',
+		filename="/var/log/switchhub.log")
+	logger = logging.getLogger(__name__)
+	logger.setLevel(confprg['logging']['log_level'])
 
+	logger.info('SwitchHub started')
 	first_run = True
-	verbose = True if (confprg['misc']['verbose'].lower() == "yes" or sim == True) else False
+	data_read = False
+#	verbose = True if (confprg['misc']['verbose'].lower() == "yes" or sim == True) else False
 	que = {}
 	que_only_on = {}
 	que_only_off = {}
@@ -81,6 +74,7 @@ def main():
 	ping = {}
 	ping_timer = {}
 	random = {}
+	sim = False
 	thread = {}
 	for host in confprg['ping_ip']:
 		ping_timer[host] = 0
@@ -96,18 +90,20 @@ def main():
 		except KeyError:
 			random[key] = 0
 
+	print("SwitchHub started.\n")
+	print("If you started SwitchHub with switchhub_start.sh,\npress Ctrl+A D to detach SwitchHub from the terminal.\n")
 
 	while True:
 		now = datetime.now()
 
-		if (now.strftime("%H:%M") == confprg['misc']['party_ends'] and party) or first_run:
-			with open (confprg['paths']['workdir'] + "party", "w") as f:
-				f.write("No party")
+#		if (now.strftime("%H:%M") == confprg['misc']['party_ends'] and party) or first_run:
+#			with open (confprg['paths']['workdir'] + "party", "w") as f:
+#				f.write("No party")
 
-		if (now.strftime("%H:%M") == "00:00") or first_run:
+		if (now.strftime("%H:%M") == "00:00") or first_run or not data_read:
 
 			# Update the variables
-			sunrise, sunset, holid = get_cal_data.events(confprg, now)
+			sunrise, sunset, holid, data_read = get_cal_data.events(confprg, now)
 			holiday_yesterday, holiday, holiday_tomorrow = get_holiday.free(confprg, holid, now, free_days, holidays)
 			workday = not holiday
 			weekday = True if 0 <= now.weekday() < 5 else False
@@ -183,11 +179,13 @@ def main():
 		# On
 		for item in que:
 			state = eval(que[item].split(';')[1])
+			logger.debug("%s, %s\n%s", item, str(state), que[item].split(';')[1])
 			if str(state) != old_state[item].split(';')[1]:
 				sstate = "--on" if state else "--off"
 				cmd = "tdtool " + sstate + " " + que[item].split(';')[0] + " > /dev/null"
-				if verbose:
-					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + sstate.replace('-', ''))
+				logger.info('%s %s', item, sstate.replace('-', ''))
+#				if verbose:
+				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + sstate.replace('-', ''))
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
 				thread[item].start()
 			old_state[item] = que[item].split(';')[0] + ";" + str(state)
@@ -195,9 +193,11 @@ def main():
 		# Only on
 		for item in que_only_on:
 			state = eval(que_only_on[item].split(';')[1])
+			logger.debug("%s, %s\n%s", item, str(state), que_only_on[item].split(';')[1])
 			if state:
-				if verbose:
-					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "on")
+				logger.info('%s on', item)
+#				if verbose:
+				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "on")
 				cmd = "tdtool --on " + que_only_on[item].split(';')[0] + " > /dev/null"
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
 				thread[item].start()
@@ -205,9 +205,11 @@ def main():
         # Only off
 		for item in que_only_off:
 			state = eval(que_only_off[item].split(';')[1])
+			logger.debug("%s, %s\n%s", item, str(state), que_only_off[item].split(';')[1])
 			if state:
-				if verbose:
-					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "off")
+				logger.info('%s off', item)
+#				if verbose:
+				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "off")
 				cmd = "tdtool --off " + que_only_off[item].split(';')[0] + " > /dev/null"
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
 				thread[item].start()
