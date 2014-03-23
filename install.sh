@@ -85,7 +85,7 @@ fi
 
 mkdir -p $INSTALL_DIR
 printf "Created new program directory "$INSTALL_DIR"\n"
-cp -vr "$STARTDIR" $INSTALL_DIR
+cp -vr $STARTDIR/* $INSTALL_DIR
 chown root:root "$INSTALL_DIR"
 
 chgrp -R switchhub "$INSTALL_DIR"/*
