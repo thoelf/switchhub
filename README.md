@@ -20,3 +20,13 @@ For more information, refer to [SwitchHub.pdf](https://github.com/thoelf/switchh
 
 ##Status
 The program seems to work very well, but everything is not thoroughly tested yet. There are also some important functions to be implemented.
+
+##Updates
+###SwitchHub 0.2
+Added:
+- Logging functionality using the logging Python library.
+- Scripts for starting, stopping and checking the status.
+- An installation script to simplify the installation.
+
+Fixed:
+- Program will crash if no connection to Google.
