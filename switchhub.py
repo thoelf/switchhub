@@ -31,7 +31,7 @@ import time
 import logging
 
 import operate_switch
-import rand_offset
+#import rand_offset
 import get_plugin_data
 
 
@@ -109,6 +109,7 @@ def main():
 		else:
 			x = 1
 		plugin_data = get_plugin_data.data(plugin_dirs, first_run, logger, plugin_data, x)
+#		print(plugin_data)
 		logger.debug("Plugin data: {0}".format(plugin_data))
 
 		if (now.strftime("%H:%M") == "00:00") or first_run: # or not data_read:
@@ -144,7 +145,8 @@ def main():
 					for pkey in plugin_data.keys():
 						if pkey in que[key]:
 							temp_str = que[key]
-							que[key] = temp_str.replace(pkey, "plugin_data['" + pkey + "']")
+							que[key] = temp_str.replace(pkey, plugin_data[pkey])
+							print(que[key])
 #					print(que[key])
 				except KeyError:
 					pass
@@ -158,7 +160,7 @@ def main():
 					for pkey in plugin_data.keys():
 						if pkey in que_only_on[key]:
 							temp_str = que_only_on[key]
-							que_only_on[key] = temp_str.replace(pkey, "plugin_data['" + pkey + "']")
+							que_only_on[key] = temp_str.replace(pkey, plugin_data[pkey])
 				except KeyError:
 					pass
 
@@ -171,7 +173,7 @@ def main():
 					for pkey in plugin_data.keys():
 						if pkey in que_only_off[key]:
 							temp_str = que_only_off[key]
-							que_only_off[key] = temp_str.replace(pkey, "plugin_data['" + pkey + "']")
+							que_only_off[key] = temp_str.replace(pkey, plugin_data[pkey])
 				except KeyError:
 					pass
 
