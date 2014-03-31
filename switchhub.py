@@ -23,16 +23,16 @@ import codecs
 from datetime import datetime
 import os
 from os import path
+import subprocess
 from subprocess import Popen
 import sys
 from threading import Thread
 import time
 import logging
 
-import get_cal_data
-import get_holiday
 import operate_switch
 import rand_offset
+import get_plugin_data
 
 
 def main():
@@ -47,14 +47,6 @@ def main():
 #	confev.read("events.cfg")
 	confev.readfp(codecs.open(confprg['misc']['event_config'] + "events.cfg", "r", "utf8"))
 
-	with open("/etc/switchhub/free_days.cfg", "r") as f:
-		free_days = f.read()
-
-#	with open("holidays.cfg", "r") as f:
-#		holidays = f.read()
-	with codecs.open("/etc/switchhub/holidays.cfg", "r", "utf8") as f:
-		holidays = f.read()
-
 	# Initialize logging
 	logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
 		datefmt='%Y-%m-%d %H:%M:%S',
@@ -64,8 +56,6 @@ def main():
 
 	logger.info('SwitchHub started')
 	first_run = True
-	data_read = False
-#	verbose = True if (confprg['misc']['verbose'].lower() == "yes" or sim == True) else False
 	que = {}
 	que_only_on = {}
 	que_only_off = {}
@@ -73,17 +63,22 @@ def main():
 	pping = {}
 	ping = {}
 	ping_timer = {}
+	plugin_data = {}
 	random = {}
 	sim = False
 	thread = {}
 	for host in confprg['ping_ip']:
 		ping_timer[host] = 0
+	plugin_dirs = ["/opt/switchhub/plugins/1_minute/",
+					"/opt/switchhub/plugins/15_minutes/",
+					"/opt/switchhub/plugins/hour/",
+					"/opt/switchhub/plugins/day/"]
 
-	# Initialize old_state
+	# Initialize old_state that is used to see if the state has been changed
 	for key in confev.sections():
 		old_state[key] = confev[key]['id'] + ";" + "Any string for now. Hi mom!"
 
-	# Read the random settings for the devices
+	# Read the random settings for the devices from the events definitions file
 	for key in confev.sections():
 		try:
 			random[key] = int(confev[key]["random"])
@@ -100,12 +95,25 @@ def main():
 #			with open (confprg['paths']['workdir'] + "party", "w") as f:
 #				f.write("No party")
 
-		if (now.strftime("%H:%M") == "00:00") or first_run or not data_read:
+		###Get data from the plugins. First, determine depending on the time, which directories to look for plugins in.
+		# Each day at 00:00 or at first run, look in all directories
+		if (now.strftime("%H:%M") == "00:00") or first_run: 
+			x = 4
+		# Each full hour, look in the directories hour, 15_minutes and 1_minute.
+		elif (now.strftime("%M") == "00"):
+			x = 3
+		# Each full quarter, look in the directories 15_minutes and 1_minute.
+		elif (now.strftime("%M") == "15") or (now.strftime("%M") == "30") or (now.strftime("%M") == "45"):
+			x = 2
+		# Each full minute, look in the directory 1_minute
+		else:
+			x = 1
+		plugin_data = get_plugin_data.data(plugin_dirs, first_run, logger, plugin_data, x)
+		logger.debug("Plugin data: {0}".format(plugin_data))
 
-			# Update the variables
-			sunrise, sunset, holid, data_read = get_cal_data.events(confprg, now)
-			holiday_yesterday, holiday, holiday_tomorrow = get_holiday.free(confprg, holid, now, free_days, holidays)
-			workday = not holiday
+		if (now.strftime("%H:%M") == "00:00") or first_run: # or not data_read:
+
+			# Update variables
 			weekday = True if 0 <= now.weekday() < 5 else False
 			monday = True if now.weekday() == 0 else False
 			tuesday = True if now.weekday() == 1 else False
@@ -126,32 +134,48 @@ def main():
 			october = True if now.month == 10 else False
 			november = True if now.month == 11 else False
 			december = True if now.month == 12 else False
-			dst = True if time.localtime()[8] == 1 else False
 
 			# Read the expressions for on
 			for key in confev.sections():
 				try:
-					que[key] = confev[key]["id"] + ";" + rand_offset.calc(confev[key]["on"], random[key], sunrise, sunset)
+#					que[key] = confev[key]["id"] + ";" + rand_offset.calc(confev[key]["on"], random[key], sunrise, sunset)
+					que[key] = confev[key]["id"] + ";" + confev[key]["on"]
+					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
+					for pkey in plugin_data.keys():
+						if pkey in que[key]:
+							temp_str = que[key]
+							que[key] = temp_str.replace(pkey, "plugin_data['" + pkey + "']")
+#					print(que[key])
 				except KeyError:
 					pass
 
 			# Read the expressions for only_on
 			for key in confev.sections():
 				try:
-					que_only_on[key] = confev[key]["id"] + ";" + rand_offset.calc(confev[key]["only_on"], random[key], sunrise, sunset)
+#					que_only_on[key] = confev[key]["id"] + ";" + rand_offset.calc(confev[key]["only_on"], random[key], sunrise, sunset)
+					que_only_on[key] = confev[key]["id"] + ";" + confev[key]["only_on"]
+					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
+					for pkey in plugin_data.keys():
+						if pkey in que_only_on[key]:
+							temp_str = que_only_on[key]
+							que_only_on[key] = temp_str.replace(pkey, "plugin_data['" + pkey + "']")
 				except KeyError:
 					pass
 
 			# Read the expressions for only_off
 			for key in confev.sections():
 				try:
-					que_only_off[key] = confev[key]["id"] + ";" + rand_offset.calc(confev[key]["only_off"], random[key], sunrise, sunset)
+#					que_only_off[key] = confev[key]["id"] + ";" + rand_offset.calc(confev[key]["only_off"], random[key], sunrise, sunset)
+					que_only_off[key] = confev[key]["id"] + ";" + confev[key]["only_off"]
+					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
+					for pkey in plugin_data.keys():
+						if pkey in que_only_off[key]:
+							temp_str = que_only_off[key]
+							que_only_off[key] = temp_str.replace(pkey, "plugin_data['" + pkey + "']")
 				except KeyError:
 					pass
 
 		t = now.strftime("%H:%M")	# t is used as a variable in events.cfg
-		sunup = True if sunrise <= t < sunset else False
-		sundown = not sunup
 
 		for host in confprg['ping_ip']:
 			if host[0] != '#':
@@ -179,12 +203,11 @@ def main():
 		# On
 		for item in que:
 			state = eval(que[item].split(';')[1])
-			logger.debug("%s, %s\n%s", item, str(state), que[item].split(';')[1])
+			logger.debug("{0}, {1}, {2}".format(item, str(state), que[item].split(';')[1]))
 			if str(state) != old_state[item].split(';')[1]:
 				sstate = "--on" if state else "--off"
 				cmd = "tdtool " + sstate + " " + que[item].split(';')[0] + " > /dev/null"
-				logger.info('%s %s', item, sstate.replace('-', ''))
-#				if verbose:
+				logger.info("{0} {1}".format(item, sstate.replace('-', '')))
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + sstate.replace('-', ''))
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
 				thread[item].start()
@@ -193,10 +216,9 @@ def main():
 		# Only on
 		for item in que_only_on:
 			state = eval(que_only_on[item].split(';')[1])
-			logger.debug("%s, %s\n%s", item, str(state), que_only_on[item].split(';')[1])
+			logger.debug("{0}, {1}, {2}".format(item, str(state), que_only_on[item].split(';')[1]))
 			if state:
-				logger.info('%s on', item)
-#				if verbose:
+				logger.info('{0} on', item)
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "on")
 				cmd = "tdtool --on " + que_only_on[item].split(';')[0] + " > /dev/null"
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
@@ -205,10 +227,9 @@ def main():
         # Only off
 		for item in que_only_off:
 			state = eval(que_only_off[item].split(';')[1])
-			logger.debug("%s, %s\n%s", item, str(state), que_only_off[item].split(';')[1])
+			logger.debug("{0}, {1}, {2}".format(item, str(state), que_only_off[item].split(';')[1]))
 			if state:
-				logger.info('%s off', item)
-#				if verbose:
+				logger.info("{0} off".format(item))
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "off")
 				cmd = "tdtool --off " + que_only_off[item].split(';')[0] + " > /dev/null"
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
