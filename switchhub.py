@@ -109,7 +109,6 @@ def main():
 		else:
 			x = 1
 		plugin_data = get_plugin_data.data(plugin_dirs, first_run, logger, plugin_data, x)
-#		print(plugin_data)
 		logger.debug("Plugin data: {0}".format(plugin_data))
 
 		if (now.strftime("%H:%M") == "00:00") or first_run: # or not data_read:
@@ -136,6 +135,8 @@ def main():
 			november = True if now.month == 11 else False
 			december = True if now.month == 12 else False
 
+			#Substitutionen av plugin_data[x] -> till värdet, bör göras varje gång plugin_data ändras!! Inte bara en ggr/dygn.
+
 			# Read the expressions for on
 			for key in confev.sections():
 				try:
@@ -146,8 +147,6 @@ def main():
 						if pkey in que[key]:
 							temp_str = que[key]
 							que[key] = temp_str.replace(pkey, plugin_data[pkey])
-							print(que[key])
-#					print(que[key])
 				except KeyError:
 					pass
 
