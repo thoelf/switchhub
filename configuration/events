@@ -16,14 +16,14 @@ id = 5
 random = 5
 on =	("05:00" <= t < "07:15" and not sunup and workday) or \
 	("17:30" <= t < "22:00" and sundown) or \
-	("14:00" <= t < "22:30" and holiday and sundown) or \
+	("14:00" <= t < "22:30" and holiday_today and sundown) or \
 	("16:00" <= t < "23:30" and holiday_tomorrow and sundown) or \
 
 [livingroom_lamp]
 id = 7
 on =	(("06:00" <= t < "07:15") and not sunup and workday and ping['phone']) or \
 	(("16:20" <= t < "22:15") and sundown and ping['phone']) or \
-	(("15:00" <= t < "22:30") and holiday and sundown and ping['phone']) or \
+	(("15:00" <= t < "22:30") and holiday_today and sundown and ping['phone']) or \
 	(("16:20" <= t < "23:30") and holiday_tomorrow and sundown and ping['phone']) or \
 	party
 
