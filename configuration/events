@@ -1,0 +1,29 @@
+[aquarium]
+id = 1
+on =	"14:15" <= t < "22:15"
+
+[tv]
+id = 2
+only_off = t == "01:00"
+
+[computer]
+id = 3
+only_on = t == "06:15" and workday and ping['phone']
+only_off = t == "07:30" and workday and not ping['phone']
+
+[hall_lamp]
+id = 5
+random = 5
+on =	("05:00" <= t < "07:15" and not sunup and workday) or \
+	("17:30" <= t < "22:00" and sundown) or \
+	("14:00" <= t < "22:30" and holiday and sundown) or \
+	("16:00" <= t < "23:30" and holiday_tomorrow and sundown) or \
+
+[livingroom_lamp]
+id = 7
+on =	(("06:00" <= t < "07:15") and not sunup and workday and ping['phone']) or \
+	(("16:20" <= t < "22:15") and sundown and ping['phone']) or \
+	(("15:00" <= t < "22:30") and holiday and sundown and ping['phone']) or \
+	(("16:20" <= t < "23:30") and holiday_tomorrow and sundown and ping['phone']) or \
+	party
+
