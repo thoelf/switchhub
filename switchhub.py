@@ -40,12 +40,12 @@ def main():
 	# Initialize config parser for program.cfg
 	confprg = configparser.ConfigParser()
 #	confprg.read("program.cfg")
-	confprg.readfp(codecs.open("/etc/switchhub/program.cfg", "r", "utf8"))
+	confprg.readfp(codecs.open("/etc/switchhub/switchhub", "r", "utf8"))
 
 	# Initialize config parser for events.cfg
 	confev = configparser.ConfigParser(allow_no_value = True)
 #	confev.read("events.cfg")
-	confev.readfp(codecs.open(confprg['misc']['event_config'] + "events.cfg", "r", "utf8"))
+	confev.readfp(codecs.open(confprg['misc']['event_config'] + "events", "r", "utf8"))
 
 	# Initialize logging
 	logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
