@@ -29,8 +29,10 @@ if [[ $(id -u) -ne 0 ]]; then
 fi
 
 INSTALL_DIR=/opt/switchhub
+PLUGINS_DIR=/opt/switchhub/plugins
 LOG_FILE=/var/log/switchhub.log
 SETTINGS_DIR=/etc/switchhub
+SETTINGS_DIR_PLUGINS=/etc/switchhub/plugins
 STARTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 USER=$(logname)
 
@@ -54,8 +56,9 @@ GEXIST=false
 getent group switchhub >/dev/null 2>&1 && GEXIST="true"
 if [[ "$GEXIST" = "false" ]]; then
     groupadd switchhub
-    printf "\nAdded the group switchhub.\n"
 fi
+
+chgrp -R switchhub *
 
 if [[ -d "/etc/logrotate.d" ]]; then
     mv -v switchhub_logrotate /etc/logrotate.d/switchhub
@@ -63,35 +66,49 @@ else
     printf "Warning: The directory /etc/logrotate.d/ does not exist. Could not copy the log rotate configuration file."
 fi
 
-mv -v events.cfg free_days.cfg holidays.cfg program.cfg "$SETTINGS_DIR"
-chgrp switchhub "$SETTINGS_DIR"/*
-chmod g+w "$SETTINGS_DIR"/*
+mkdir -p "$SETTINGS_DIR"
+cp ./configuration/events ./configuration/switchhub "$SETTINGS_DIR"
+chgrp -R switchhub "$SETTINGS_DIR"
+chmod -R g+w "$SETTINGS_DIR"
 
-chmod u+x switchhub_start switchhub_status switchhub_stop
-cp -v switchhub_start switchhub_status switchhub_stop /home/$USER
+mkdir -p "$SETTINGS_DIR_PLUGINS"/gcalendar
+cp ./configuration/gcalendar_free_days ./configuration/gcalendar_holidays "$SETTINGS_DIR_PLUGINS"
+chgrp -R switchhub "$SETTINGS_DIR_PLUGINS"
+chmod -R g+w "$SETTINGS_DIR_PLUGINS"
 
-if [[ ! -d "$SETTINGS_DIR" ]]; then
-    mkdir -p "$SETTINGS_DIR"
-    printf "Created the directory $SETTINGS_DIR."
-fi
+mkdir -p "$INSTALL_DIR"
+chgrp switchhub "$INSTALL_DIR"
+chmod g+w "$INSTALL_DIR"
 
-if [[ -d "$INSTALL_DIR" ]]; then
-    rm -rf "$INSTALL_DIR"
-    printf "Removed old install directory $INSTALL_DIR.\n"
-fi
+mkdir -p "$PLUGINS_DIR"
+cp ./plugins/gcalendar.py "$PLUGINS_DIR"
+chgrp -R switchhub "$PLUGINS_DIR"
+chmod -R g+w "$PLUGINS_DIR"
 
-mkdir -p $INSTALL_DIR
-printf "Created new program directory $INSTALL_DIR.\n"
-cp -vr $STARTDIR/* $INSTALL_DIR
-chown root:root "$INSTALL_DIR"
+mkdir -p "$PLUGINS_DIR"/1minute
+chgrp switchhub "$PLUGINS_DIR"/1_minute
+chmod g+w "$PLUGINS_DIR"/1minute
+
+mkdir -p "$PLUGINS_DIR"/15minutes
+chgrp switchhub "$PLUGINS_DIR"/15_minutes
+chmod g+w "$PLUGINS_DIR"/15minutes
+
+mkdir -p "$PLUGINS_DIR"/hour
+chgrp switchhub "$PLUGINS_DIR"/hour
+chmod g+w "$PLUGINS_DIR"/1hour
+
+mkdir -p "$PLUGINS_DIR"/1day
+chgrp switchhub "$PLUGINS_DIR"/day
+chmod g+w "$PLUGINS_DIR"/1day
+
+cp switchhub.py get_plugin_data.py operate_switch.py SwitchHub.pdf switchhub_start switchhub_status switchhub_stop LICENSE $INSTALL_DIR
 
 chgrp -R switchhub "$INSTALL_DIR"/*
 chmod -R g+w "$INSTALL_DIR"/*
-chmod g+x "$INSTALL_DIR"/switchhub.py
+chmod g+x "$INSTALL_DIR"/{switchhub.py,switchhub_start,switchhub_status,switchhub_stop}
 
 if [[ ! -f "$LOG_FILE" ]]; then
     touch "$LOG_FILE"
-    printf "Created $LOG_FILE."
 fi
 
 chgrp switchhub "$LOG_FILE"
