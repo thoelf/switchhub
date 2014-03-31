@@ -51,8 +51,8 @@ def main():
 				if line[0][0] != '[':               # If line does not start with '['
 					_sunup = line.split(' ')[1]
 					_sundown = line.split(' ')[4]
-					sunup = "(\"{0}\" <= t < \"{1}\")".format(_sunup, _sundown)
-					sundown = "(\"00:00\" <= t < \"{0}\" or \"{1}\" <= t < \"23:59\")".format(_sunup, _sundown)
+					sunup = '(\'{0}\' <= t < \'{1}\')'.format(_sunup, _sundown)
+					sundown = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format(_sunup, _sundown)
 
 	cmd = {}
 	holi = {}
