@@ -31,7 +31,6 @@ import time
 import logging
 
 import operate_switch
-#import rand_offset
 import get_plugin_data
 
 
@@ -64,6 +63,7 @@ def main():
 	ping = {}
 	ping_timer = {}
 	plugin_data = {}
+	plugin_data_old = {}
 	random = {}
 	sim = False
 	thread = {}
@@ -112,7 +112,6 @@ def main():
 		logger.debug("Plugin data: {0}".format(plugin_data))
 
 		if (now.strftime("%H:%M") == "00:00") or first_run: # or not data_read:
-
 			# Update variables
 			weekday = True if 0 <= now.weekday() < 5 else False
 			monday = True if now.weekday() == 0 else False
@@ -135,12 +134,12 @@ def main():
 			november = True if now.month == 11 else False
 			december = True if now.month == 12 else False
 
-			#Substitutionen av plugin_data[x] -> till värdet, bör göras varje gång plugin_data ändras!! Inte bara en ggr/dygn.
-
+		# Re-build the event expressions each time there is new plug-in data.
+		if (plugin_data_old != plugin_data) or first_run:
+			plugin_data_old = plugin_data
 			# Read the expressions for on
 			for key in confev.sections():
 				try:
-#					que[key] = confev[key]["id"] + ";" + rand_offset.calc(confev[key]["on"], random[key], sunrise, sunset)
 					que[key] = confev[key]["id"] + ";" + confev[key]["on"]
 					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
 					for pkey in plugin_data.keys():
@@ -153,7 +152,6 @@ def main():
 			# Read the expressions for only_on
 			for key in confev.sections():
 				try:
-#					que_only_on[key] = confev[key]["id"] + ";" + rand_offset.calc(confev[key]["only_on"], random[key], sunrise, sunset)
 					que_only_on[key] = confev[key]["id"] + ";" + confev[key]["only_on"]
 					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
 					for pkey in plugin_data.keys():
@@ -175,7 +173,7 @@ def main():
 							que_only_off[key] = temp_str.replace(pkey, plugin_data[pkey])
 				except KeyError:
 					pass
-
+				
 		t = now.strftime("%H:%M")	# t is used as a variable in events.cfg
 
 		for host in confprg['ping_ip']:
