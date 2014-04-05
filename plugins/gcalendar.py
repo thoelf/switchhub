@@ -41,7 +41,7 @@ def main():
 	# Get sun data from Google
 	command = "google calendar list --fields name --cal " + "\"" + sun_calendar + "\"" + " --date today"
 	try:
-		stdoutdata = subprocess.check_output([command], shell=True)
+		stdoutdata = subprocess.check_output([command], shell=True).wait()
 	except subprocess.CalledProcessError:
 		pass
 	else:
@@ -64,7 +64,7 @@ def main():
 	cmd['tomorrow'] = command + (now + timedelta(days=1)).strftime("%Y-%m-%d")
 	for day in cmd:
 		try:
-			stdoutdata[day] = subprocess.check_output([cmd[day]], shell=True)
+			stdoutdata[day] = subprocess.check_output([cmd[day]], shell=True).wait()
 		except subprocess.CalledProcessError:
 			pass
 		else:
