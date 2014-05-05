@@ -136,7 +136,9 @@ def main():
 
 		# Re-build the event expressions each time there is new plug-in data.
 		if (plugin_data_old != plugin_data) or first_run:
-			plugin_data_old = plugin_data
+			for key in plugin_data:
+				plugin_data_old = {}
+				plugin_data_old[key] = plugin_data[key]
 			# Read the expressions for on
 			for key in confev.sections():
 				try:
