@@ -101,11 +101,11 @@ mkdir -p "$PLUGINS_DIR"/1day
 chgrp switchhub "$PLUGINS_DIR"/day
 chmod g+w "$PLUGINS_DIR"/1day
 
-cp switchhub.py get_plugin_data.py operate_switch.py SwitchHub.pdf switchhub_start switchhub_status switchhub_stop LICENSE $INSTALL_DIR
+cp switchhub.py get_plugin_data.py operate_switch.py SwitchHub.pdf switchhub.sh LICENSE $INSTALL_DIR
 
 chgrp -R switchhub "$INSTALL_DIR"/*
 chmod -R g+w "$INSTALL_DIR"/*
-chmod g+x "$INSTALL_DIR"/{switchhub.py,switchhub_start,switchhub_status,switchhub_stop}
+chmod g+x "$INSTALL_DIR"/{switchhub.py,switchhub.sh}
 
 if [[ ! -f "$LOG_FILE" ]]; then
     touch "$LOG_FILE"
