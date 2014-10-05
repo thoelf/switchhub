@@ -86,14 +86,10 @@ def main():
 			random[key] = 0
 
 	print("SwitchHub started.\n")
-	print("If you started SwitchHub with switchhub_start.sh,\npress Ctrl+A D to detach SwitchHub from the terminal.\n")
+	print("If you started SwitchHub with switchhub.sh start,\npress Ctrl+A D to detach SwitchHub from the terminal.\n")
 
 	while True:
 		now = datetime.now()
-
-#		if (now.strftime("%H:%M") == confprg['misc']['party_ends'] and party) or first_run:
-#			with open (confprg['paths']['workdir'] + "party", "w") as f:
-#				f.write("No party")
 
 		###Get data from the plugins. First, determine depending on the time, which directories to look for plugins in.
 		# Each day at 00:00 or at first run, look in all directories
@@ -193,13 +189,6 @@ def main():
 			else:
 				ping[host] = False
 
-		# Party time?
-#		with open (confprg['paths']['workdir'] + "party", "r") as f:
-#			party = f.read()
-#		f.close()
-#		party = True if party == "party" else False
-		party = False
-
 		# Operate switches, if there's time for a change
 		# On
 		for item in que:
@@ -210,9 +199,15 @@ def main():
 				cmd = "tdtool " + sstate + " " + que[item].split(';')[0] + " > /dev/null"
 				logger.info("{0} {1}".format(item, sstate.replace('-', '')))
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + sstate.replace('-', ''))
+
+				with open("/run/shm/data/" + "switch_" + item, "w") as f:
+					f.write(sstate.replace('-', ''))
+
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
 				thread[item].start()
 			old_state[item] = que[item].split(';')[0] + ";" + str(state)
+
+
 
 		# Only on
 		for item in que_only_on:
@@ -221,6 +216,10 @@ def main():
 			if state:
 				logger.info('{0} on', item)
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "on")
+
+				with open("/run/shm/data/" + "switch_" + item, "w") as f:
+					f.write(sstate.replace('-', ''))
+
 				cmd = "tdtool --on " + que_only_on[item].split(';')[0] + " > /dev/null"
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
 				thread[item].start()
@@ -232,6 +231,10 @@ def main():
 			if state:
 				logger.info("{0} off".format(item))
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "off")
+
+				with open("/run/shm/data/" + "switch_" + item, "w") as f:
+					f.write(sstate.replace('-', ''))
+
 				cmd = "tdtool --off " + que_only_off[item].split(';')[0] + " > /dev/null"
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
 				thread[item].start()
