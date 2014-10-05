@@ -23,6 +23,7 @@ def main():
 	import datetime
 	from datetime import datetime
 	from datetime import timedelta
+	import os
 	import subprocess
 
 	# Edit these settings for your location
@@ -39,6 +40,8 @@ def main():
 
 
 	# Get sun data from Google
+#	if not os.system("ping -c 1 " + "www.google.com"):
+
 	command = "google calendar list --fields name --cal " + "\"" + sun_calendar + "\"" + " --date today"
 	try:
 		stdoutdata = subprocess.check_output([command], shell=True)
