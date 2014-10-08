@@ -29,6 +29,7 @@ import sys
 from threading import Thread
 import time
 import logging
+import re
 
 import operate_switch
 import get_plugin_data
@@ -58,13 +59,14 @@ def main():
 	que = {}
 	que_only_on = {}
 	que_only_off = {}
+	que_dim = {}
 	old_state = {}
 	pping = {}
 	ping = {}
 	ping_timer = {}
 	plugin_data = {}
 	plugin_data_old = {}
-	random = {}
+#	random = {}
 	sim = False
 	thread = {}
 	for host in confprg['ping_ip']:
@@ -79,11 +81,11 @@ def main():
 		old_state[key] = confev[key]['id'] + ";" + "Any string for now. Hi mom!"
 
 	# Read the random settings for the devices from the events definitions file
-	for key in confev.sections():
-		try:
-			random[key] = int(confev[key]["random"])
-		except KeyError:
-			random[key] = 0
+#	for key in confev.sections():
+#		try:
+#			random[key] = int(confev[key]["random"])
+#		except KeyError:
+#			random[key] = 0
 
 	print("SwitchHub started.\n")
 	print("If you started SwitchHub with switchhub.sh start,\npress Ctrl+A D to detach SwitchHub from the terminal.\n")
@@ -142,8 +144,9 @@ def main():
 					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
 					for pkey in plugin_data.keys():
 						if pkey in que[key]:
-							temp_str = que[key]
-							que[key] = temp_str.replace(pkey, plugin_data[pkey])
+#							temp_str = que[key]
+#							que[key] = temp_str.replace(pkey, plugin_data[pkey])
+							que[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que[key])
 				except KeyError:
 					pass
 
@@ -154,8 +157,9 @@ def main():
 					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
 					for pkey in plugin_data.keys():
 						if pkey in que_only_on[key]:
-							temp_str = que_only_on[key]
-							que_only_on[key] = temp_str.replace(pkey, plugin_data[pkey])
+#							temp_str = que_only_on[key]
+#							que_only_on[key] = temp_str.replace(pkey, plugin_data[pkey])
+							que_only_on[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que_only_on[key])
 				except KeyError:
 					pass
 
@@ -167,11 +171,28 @@ def main():
 					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
 					for pkey in plugin_data.keys():
 						if pkey in que_only_off[key]:
-							temp_str = que_only_off[key]
-							que_only_off[key] = temp_str.replace(pkey, plugin_data[pkey])
+#							temp_str = que_only_off[key]
+#							que_only_off[key] = temp_str.replace(pkey, plugin_data[pkey])
+							que_only_off[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que_only_off[key])
 				except KeyError:
 					pass
-				
+
+			# Read the expressions for dim_<0-100>
+			for key in confev.sections():
+				try:
+					for value in confev.options(key):	#för varje option (t ex dim_25, only_on etc)
+						match = re.match(r'(dim_)(\d{1,3})', value)
+						if match:	
+							que_dim[key] = confev[key]["id"] + ";" + confev[key][value] + ";" + match.group(2)
+						# In event definition, replace variable name from plugins with "plugin_data['variable name']"
+						for pkey in plugin_data.keys():
+							if pkey in que_dim[key]:
+#								temp_str = que_dim[key]
+#								que_dim[key] = temp_str.replace(pkey, plugin_data[pkey])
+								que_dim[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que_dim[key])
+				except KeyError:
+					pass
+
 		t = now.strftime("%H:%M")	# t is used as a variable in events.cfg
 
 		for host in confprg['ping_ip']:
