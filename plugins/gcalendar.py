@@ -30,8 +30,8 @@ def main():
     # Wait until www.google.com can be reached or wait 10 minutes.
     # The whole program will wait, so we don't want to wait too long.
     # If the connection cannot be established, switchhub will use the existing (old) values.
-    # If there are no old values (first run), switchhub will crash due to undefined variables
-    # in the events configuration file.
+    # If there are no old values (first run), switchhub will crash if variables in the
+    # events configuration file becomes undefined.
     minutes = 0
     while os.system("ping -c 1 www.google.com") and minutes < 10:
         time.sleep(60)
@@ -39,7 +39,7 @@ def main():
 
     if minutes < 10:
 
-        # Edit these settings for your location
+        # Edit these settings for your location - move to config file
         holidays_calendar = "Helgdagar i Sverige"
         sun_calendar = "Soluppgång och solnedgång för Linköping"
 
@@ -66,6 +66,61 @@ def main():
                         sunup = '(\'{0}\' <= t < \'{1}\')'.format(_sunup, _sundown)
                         sundown = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format(_sunup, _sundown)
 
+            t_sunup = datetime.strptime(_sunup, '%H:%M')
+            t_sundown = datetime.strptime(_sundown, '%H:%M')
+
+            sunup_minus_10 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup - timedelta(minutes=10)).strftime('%H:%M'), (t_sundown - timedelta(minutes=10)).strftime('%H:%M'))
+            sunup_minus_20 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup - timedelta(minutes=20)).strftime('%H:%M'), (t_sundown - timedelta(minutes=20)).strftime('%H:%M'))
+            sunup_minus_30 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup - timedelta(minutes=30)).strftime('%H:%M'), (t_sundown - timedelta(minutes=30)).strftime('%H:%M'))
+            sunup_minus_40 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup - timedelta(minutes=40)).strftime('%H:%M'), (t_sundown - timedelta(minutes=40)).strftime('%H:%M'))
+            sunup_minus_50 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup - timedelta(minutes=50)).strftime('%H:%M'), (t_sundown - timedelta(minutes=50)).strftime('%H:%M'))
+            sunup_minus_60 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup - timedelta(minutes=60)).strftime('%H:%M'), (t_sundown - timedelta(minutes=60)).strftime('%H:%M'))
+
+            sunup_plus_10 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup + timedelta(minutes=10)).strftime('%H:%M'), (t_sundown + timedelta(minutes=10)).strftime('%H:%M'))
+            sunup_plus_20 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup + timedelta(minutes=20)).strftime('%H:%M'), (t_sundown + timedelta(minutes=20)).strftime('%H:%M'))
+            sunup_plus_30 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup + timedelta(minutes=30)).strftime('%H:%M'), (t_sundown + timedelta(minutes=30)).strftime('%H:%M'))
+            sunup_plus_40 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup + timedelta(minutes=40)).strftime('%H:%M'), (t_sundown + timedelta(minutes=40)).strftime('%H:%M'))
+            sunup_plus_50 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup + timedelta(minutes=50)).strftime('%H:%M'), (t_sundown + timedelta(minutes=50)).strftime('%H:%M'))
+            sunup_plus_60 = '(\'{0}\' <= t < \'{1}\')'.format((\
+			t_sunup + timedelta(minutes=60)).strftime('%H:%M'), (t_sundown + timedelta(minutes=60)).strftime('%H:%M'))
+
+            sundown_minus_10 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup - timedelta(minutes=10)).strftime('%H:%M'), (t_sundown - timedelta(minutes=10)).strftime('%H:%M'))
+            sundown_minus_20 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup - timedelta(minutes=20)).strftime('%H:%M'), (t_sundown - timedelta(minutes=20)).strftime('%H:%M'))
+            sundown_minus_30 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup - timedelta(minutes=30)).strftime('%H:%M'), (t_sundown - timedelta(minutes=30)).strftime('%H:%M'))
+            sundown_minus_40 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup - timedelta(minutes=40)).strftime('%H:%M'), (t_sundown - timedelta(minutes=40)).strftime('%H:%M'))
+            sundown_minus_50 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup - timedelta(minutes=50)).strftime('%H:%M'), (t_sundown - timedelta(minutes=50)).strftime('%H:%M'))
+            sundown_minus_60 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup - timedelta(minutes=60)).strftime('%H:%M'), (t_sundown - timedelta(minutes=60)).strftime('%H:%M'))
+
+            sundown_plus_10 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup + timedelta(minutes=10)).strftime('%H:%M'), (t_sundown + timedelta(minutes=10)).strftime('%H:%M'))
+            sundown_plus_20 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup + timedelta(minutes=20)).strftime('%H:%M'), (t_sundown + timedelta(minutes=20)).strftime('%H:%M'))
+            sundown_plus_30 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup + timedelta(minutes=30)).strftime('%H:%M'), (t_sundown + timedelta(minutes=30)).strftime('%H:%M'))
+            sundown_plus_40 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup + timedelta(minutes=40)).strftime('%H:%M'), (t_sundown + timedelta(minutes=40)).strftime('%H:%M'))
+            sundown_plus_50 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup + timedelta(minutes=50)).strftime('%H:%M'), (t_sundown + timedelta(minutes=50)).strftime('%H:%M'))
+            sundown_plus_60 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+			t_sunup + timedelta(minutes=60)).strftime('%H:%M'), (t_sundown + timedelta(minutes=60)).strftime('%H:%M'))
+
         cmd = {}
         holi = {}
         stdoutdata = {}
@@ -87,7 +142,6 @@ def main():
                             holi[day] = line.split('\n')[0]
                         else:
                             holi[day] = ""
-        
 
         days = {}
         days['yesterday'] = now - timedelta(days = 1)
@@ -132,6 +186,30 @@ def main():
         print("gcalendar.py;holiday_today;{0}".format(holiday['today']))
         print("gcalendar.py;holiday_tomorrow;{0}".format(holiday['tomorrow']))
         print("gcalendar.py;workday;{0}".format(not holiday['today']))
+        print("gcalendar.py;sunup_minus_10;{0}".format(sunup_minus_10))
+        print("gcalendar.py;sunup_minus_20;{0}".format(sunup_minus_20))
+        print("gcalendar.py;sunup_minus_30;{0}".format(sunup_minus_30))
+        print("gcalendar.py;sunup_minus_40;{0}".format(sunup_minus_40))
+        print("gcalendar.py;sunup_minus_50;{0}".format(sunup_minus_50))
+        print("gcalendar.py;sunup_minus_60;{0}".format(sunup_minus_60))
+        print("gcalendar.py;sunup_plus_10;{0}".format(sunup_plus_10))
+        print("gcalendar.py;sunup_plus_20;{0}".format(sunup_plus_20))
+        print("gcalendar.py;sunup_plus_30;{0}".format(sunup_plus_30))
+        print("gcalendar.py;sunup_plus_40;{0}".format(sunup_plus_40))
+        print("gcalendar.py;sunup_plus_50;{0}".format(sunup_plus_50))
+        print("gcalendar.py;sunup_plus_60;{0}".format(sunup_plus_60))
+        print("gcalendar.py;sundown_minus_10;{0}".format(sundown_minus_10))
+        print("gcalendar.py;sundown_minus_20;{0}".format(sundown_minus_20))
+        print("gcalendar.py;sundown_minus_30;{0}".format(sundown_minus_30))
+        print("gcalendar.py;sundown_minus_40;{0}".format(sundown_minus_40))
+        print("gcalendar.py;sundown_minus_50;{0}".format(sundown_minus_50))
+        print("gcalendar.py;sundown_minus_60;{0}".format(sundown_minus_60))
+        print("gcalendar.py;sundown_plus_10;{0}".format(sundown_plus_10))
+        print("gcalendar.py;sundown_plus_20;{0}".format(sundown_plus_20))
+        print("gcalendar.py;sundown_plus_30;{0}".format(sundown_plus_30))
+        print("gcalendar.py;sundown_plus_40;{0}".format(sundown_plus_40))
+        print("gcalendar.py;sundown_plus_50;{0}".format(sundown_plus_50))
+        print("gcalendar.py;sundown_plus_60;{0}".format(sundown_plus_60))
 
 if __name__ == "__main__":
     main()
