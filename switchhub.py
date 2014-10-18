@@ -233,7 +233,7 @@ def main():
 			if str(state) != old_state[item].split(';')[1]:
 				sstate = "--on" if state else "--off"
 				cmd = "tdtool " + sstate + " " + que[item].split(';')[0] + " > /dev/null"
-				logger.info("State change in que {0} {1}".format(item, sstate.replace('-', '')))
+				logger.info("State change: que {0} {1}".format(item, sstate.replace('-', '')))
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + sstate.replace('-', ''))
 
 				with open("/run/shm/data/" + "switch_" + item, "w") as f:
@@ -248,7 +248,7 @@ def main():
 			state = eval(que_only_on[item].split(';')[1])
 			logger.debug("{0}, {1}, {2}".format(item, str(state), que_only_on[item].split(';')[1]))
 			if state:
-				logger.info("State change in que_only_on {0} on", item)
+				logger.info("State change: que_only_on {0} on", item)
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "on")
 
 				with open("/run/shm/data/" + "switch_" + item, "w") as f:
@@ -263,7 +263,7 @@ def main():
 			state = eval(que_only_off[item].split(';')[1])
 			logger.debug("{0}, {1}, {2}".format(item, str(state), que_only_off[item].split(';')[1]))
 			if state:
-				logger.info("State change in que_only_off {0} off".format(item))
+				logger.info("State change: que_only_off {0} off".format(item))
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "off")
 
 				with open("/run/shm/data/" + "switch_" + item, "w") as f:
@@ -289,11 +289,11 @@ def main():
 		for idno in dimmer:
 			if (dimmer[idno] != dimmer_old[idno]) or first_run:
 				if (dimmer[idno] != 0):
-					logger.info("State change in dimmer id {0} set to {1}".format(idno, dimmer[idno]))
+					logger.info("State change: dimmer id {0} set to {1}".format(idno, dimmer[idno]))
 					cmd = "tdtool --dimlevel " + str(dimmer[idno]) + " --dim " + idno + " > /dev/null"
 					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + idno + " " * (24 - len(item)) + "dim " + str(dimmer[idno]))
 				else:
-					logger.info("State change in dimmer id {0} set to {1}".format(idno, dimmer[idno]))
+					logger.info("State change: dimmer id {0} set to {1}".format(idno, dimmer[idno]))
 					cmd = "tdtool --off " + idno + " > /dev/null"
 					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + idno + " " * (24 - len(item)) + "off")
 
