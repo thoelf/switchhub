@@ -40,20 +40,6 @@ if [[ $(pgrep -f switchhub.py) ]]; then
 else
     printf "\nSwitchhub is not running.\n"
 fi
-
-rows=$(tail /var/log/switchhub.log | wc -l)
-if [[ $rows > 0 ]]; then
-    if (( $rows >= 5 )); then
-        printf "\nThe latest 5 log messages:\n"
-    elif [[ $rows = 1 ]]; then
-        printf "The latest log message:\n"
-    else
-        printf "The latest $rows log messages:\n"
-    fi
-    tail -5 /var/log/switchhub.log
-else
-    printf "There is nothing in the log yet.\n"
-fi
 }
 
 case $1 in
