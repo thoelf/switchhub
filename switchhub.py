@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # Copyright 2014 Thomas Elfström
 # switchhub.py
@@ -69,6 +69,9 @@ def main():
 #	random = {}
 	sim = False
 	thread = {}
+	dimmer = {}
+	dimmer_old = {}
+	diff_dim = {}
 	for host in confprg['ping_ip']:
 		ping_timer[host] = 0
 	plugin_dirs = ["/opt/switchhub/plugins/1_minute/",
@@ -76,9 +79,9 @@ def main():
 					"/opt/switchhub/plugins/hour/",
 					"/opt/switchhub/plugins/day/"]
 
-	# Initialize old_state that is used to see if the state has been changed
+	# Initialize old_state for on that is used to see if the state for on has been changed
 	for key in confev.sections():
-		old_state[key] = confev[key]['id'] + ";" + "Any string for now. Hi mom!"
+		old_state[key] = confev[key]['id'] + ";Old on state"
 
 	# Read the random settings for the devices from the events definitions file
 #	for key in confev.sections():
@@ -132,7 +135,7 @@ def main():
 			november = True if now.month == 11 else False
 			december = True if now.month == 12 else False
 
-		# Re-build the event expressions each time there is new plug-in data.
+		# Re-build the event expressions each time there is new plug-in data or at first run.
 		if (plugin_data_old != plugin_data) or first_run:
 			plugin_data_old = {}
 			for key in plugin_data:
@@ -141,12 +144,16 @@ def main():
 			for key in confev.sections():
 				try:
 					que[key] = confev[key]["id"] + ";" + confev[key]["on"]
+					# Replace e.g. 22:30 with '22:30'
+					que[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que[key])
+					# Replace e.g. ping:sven with ping['sven']
+					que[key] = re.sub(r'(ping:)([A-Za-z0-9\-\_]+)', r"ping['\2']", que[key])
 					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
 					for pkey in plugin_data.keys():
 						if pkey in que[key]:
-#							temp_str = que[key]
-#							que[key] = temp_str.replace(pkey, plugin_data[pkey])
 							que[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que[key])
+							que[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que[key])
+							que[key] = re.sub(r"'+", r"'", que[key])
 				except KeyError:
 					pass
 
@@ -154,12 +161,14 @@ def main():
 			for key in confev.sections():
 				try:
 					que_only_on[key] = confev[key]["id"] + ";" + confev[key]["only_on"]
+					que_only_on[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_only_on[key])
+					que_only_on[key] = re.sub(r'(ping:)([A-Za-z0-9\-\_]+)', r"ping['\2']", que_only_on[key])
 					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
 					for pkey in plugin_data.keys():
 						if pkey in que_only_on[key]:
-#							temp_str = que_only_on[key]
-#							que_only_on[key] = temp_str.replace(pkey, plugin_data[pkey])
 							que_only_on[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que_only_on[key])
+							que_only_on[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_only_on[key])
+							que_only_on[key] = re.sub(r"'+", r"'", que_only_on[key])
 				except KeyError:
 					pass
 
@@ -168,30 +177,36 @@ def main():
 				try:
 #					que_only_off[key] = confev[key]["id"] + ";" + rand_offset.calc(confev[key]["only_off"], random[key], sunrise, sunset)
 					que_only_off[key] = confev[key]["id"] + ";" + confev[key]["only_off"]
+					que_only_off[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_only_off[key])
+					que_only_off[key] = re.sub(r'(ping:)([A-Za-z0-9\-\_]+)', r"ping['\2']", que_only_off[key])
 					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
 					for pkey in plugin_data.keys():
 						if pkey in que_only_off[key]:
-#							temp_str = que_only_off[key]
-#							que_only_off[key] = temp_str.replace(pkey, plugin_data[pkey])
 							que_only_off[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que_only_off[key])
+							que_only_off[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_only_off[key])
+							que_only_off[key] = re.sub(r"'+", r"'", que_only_off[key])
 				except KeyError:
 					pass
 
 			# Read the expressions for dim_<0-100>
-			for key in confev.sections():
+			for key in confev.sections():	#key = aquarium etc
 				try:
 					for value in confev.options(key):	#för varje option (t ex dim_25, only_on etc)
 						match = re.match(r'(dim_)(\d{1,3})', value)
-						if match:	
-							que_dim[key] = confev[key]["id"] + ";" + confev[key][value] + ";" + match.group(2)
-						# In event definition, replace variable name from plugins with "plugin_data['variable name']"
-						for pkey in plugin_data.keys():
-							if pkey in que_dim[key]:
-#								temp_str = que_dim[key]
-#								que_dim[key] = temp_str.replace(pkey, plugin_data[pkey])
-								que_dim[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que_dim[key])
+						if match:
+#							print(confev[key]["id"] + ";" + confev[key][value] + ";" + match.group(2) + ";" + key)
+							que_dim[key + value] = confev[key]["id"] + ";" + confev[key][value] + ";" + match.group(2) + ";" + key
+							que_dim[key + value] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_dim[key + value])
+							que_dim[key + value] = re.sub(r'(ping:)([A-Za-z0-9\-\_]+)', r"ping['\2']", que_dim[key + value])
+							# In event definition, replace variable name from plugins with "plugin_data['variable name']"
+							for pkey in plugin_data.keys():
+								if pkey in que_dim[key + value]:
+									que_dim[key + value] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que_dim[key + value])
+									que_dim[key + value] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_dim[key + value])
+									que_dim[key + value] = re.sub(r"'+", r"'", que_dim[key + value])
 				except KeyError:
 					pass
+
 
 		t = now.strftime("%H:%M")	# t is used as a variable in events.cfg
 
@@ -218,7 +233,7 @@ def main():
 			if str(state) != old_state[item].split(';')[1]:
 				sstate = "--on" if state else "--off"
 				cmd = "tdtool " + sstate + " " + que[item].split(';')[0] + " > /dev/null"
-				logger.info("{0} {1}".format(item, sstate.replace('-', '')))
+				logger.info("State change in que {0} {1}".format(item, sstate.replace('-', '')))
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + sstate.replace('-', ''))
 
 				with open("/run/shm/data/" + "switch_" + item, "w") as f:
@@ -228,14 +243,12 @@ def main():
 				thread[item].start()
 			old_state[item] = que[item].split(';')[0] + ";" + str(state)
 
-
-
 		# Only on
 		for item in que_only_on:
 			state = eval(que_only_on[item].split(';')[1])
 			logger.debug("{0}, {1}, {2}".format(item, str(state), que_only_on[item].split(';')[1]))
 			if state:
-				logger.info('{0} on', item)
+				logger.info("State change in que_only_on {0} on", item)
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "on")
 
 				with open("/run/shm/data/" + "switch_" + item, "w") as f:
@@ -250,7 +263,7 @@ def main():
 			state = eval(que_only_off[item].split(';')[1])
 			logger.debug("{0}, {1}, {2}".format(item, str(state), que_only_off[item].split(';')[1]))
 			if state:
-				logger.info("{0} off".format(item))
+				logger.info("State change in que_only_off {0} off".format(item))
 				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "off")
 
 				with open("/run/shm/data/" + "switch_" + item, "w") as f:
@@ -259,6 +272,35 @@ def main():
 				cmd = "tdtool --off " + que_only_off[item].split(';')[0] + " > /dev/null"
 				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
 				thread[item].start()
+
+
+		# Dim
+		for item in que_dim:
+			dimmer[que_dim[item].split(';')[0]] = 0  # All dim values for all id's are set to zero
+		for item in que_dim:
+			#For each item (e.g. lampdim_10), dimmer[id] = the value, if the expression if true, otherwise unchanged
+			if eval(que_dim[item].split(';')[1]):
+				if int(dimmer[que_dim[item].split(';')[0]]) < int(que_dim[item].split(';')[2]):
+					dimmer[que_dim[item].split(';')[0]] = que_dim[item].split(';')[2] 
+
+		if first_run:
+			dimmer_old = dimmer.copy()
+		
+		for idno in dimmer:
+			if (dimmer[idno] != dimmer_old[idno]) or first_run:
+				if (dimmer[idno] != 0):
+					logger.info("State change in dimmer id {0} set to {1}".format(idno, dimmer[idno]))
+					cmd = "tdtool --dimlevel " + str(dimmer[idno]) + " --dim " + idno + " > /dev/null"
+					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + idno + " " * (24 - len(item)) + "dim " + str(dimmer[idno]))
+				else:
+					logger.info("State change in dimmer id {0} set to {1}".format(idno, dimmer[idno]))
+					cmd = "tdtool --off " + idno + " > /dev/null"
+					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + idno + " " * (24 - len(item)) + "off")
+
+				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
+				thread[item].start()
+
+		dimmer_old = dimmer.copy()
 
 		first_run = False
 		
