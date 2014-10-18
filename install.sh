@@ -72,7 +72,7 @@ chgrp -R switchhub "$SETTINGS_DIR"
 chmod -R g+w "$SETTINGS_DIR"
 
 mkdir -p "$SETTINGS_DIR_PLUGINS"/gcalendar
-cp ./configuration/gcalendar_free_days ./configuration/gcalendar_holidays "$SETTINGS_DIR_PLUGINS"
+cp ./configuration/gcalendar ./configuration/gcalendar_free_days ./configuration/gcalendar_holidays "$SETTINGS_DIR_PLUGINS"
 chgrp -R switchhub "$SETTINGS_DIR_PLUGINS"
 chmod -R g+w "$SETTINGS_DIR_PLUGINS"
 

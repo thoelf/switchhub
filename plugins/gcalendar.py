@@ -20,12 +20,18 @@ along with SwitchHub. If not, see <http://www.gnu.org/licenses/>. '''
 
 
 def main():
+    import configparser
+    import codecs
     import datetime
     from datetime import datetime
     from datetime import timedelta
     import os
     import subprocess
     import time
+
+	# Initialize config parser for the gcalendar settings file
+    confgcal = configparser.ConfigParser()
+    confgcal.readfp(codecs.open("/etc/switchhub/plugins/gcalendar", "r", "utf8"))
 
     # Wait until www.google.com can be reached or wait 10 minutes.
     # The whole program will wait, so we don't want to wait too long.
@@ -40,8 +46,12 @@ def main():
     if minutes < 10:
 
         # Edit these settings for your location - move to config file
-        holidays_calendar = "Helgdagar i Sverige"
-        sun_calendar = "Soluppgång och solnedgång för Linköping"
+#        holidays_calendar = "Helgdagar i Sverige"
+        holidays_calendar = confgcal['calendars']['holidays_calendar']
+ #       sun_calendar = "Soluppgång och solnedgång för Linköping"
+        sun_calendar = confgcal['calendars']['sun_calendar']
+
+#        print(holidays_calendar, sun_calendar)
 
         with open("/etc/switchhub/plugins/gcalendar_holidays", "r") as f:
             holidays = f.read()
@@ -51,7 +61,7 @@ def main():
 
         now = datetime.now()
 
-        command = "google calendar list --fields name --cal " + "\"" + sun_calendar + "\"" + " --date today"
+        command = "google calendar list --fields name --cal " + sun_calendar + " --date today"
         try:
             stdoutdata = subprocess.check_output([command], shell=True)
         except subprocess.CalledProcessError:
@@ -63,9 +73,6 @@ def main():
                     if line[0][0] != '[':               # If line does not start with '['
                         _sunup = line.split(' ')[1]
                         _sundown = line.split(' ')[4]
-#                        sunup = '(\'{0}\' <= t < \'{1}\')'.format(_sunup, _sundown)
-#                        sundown = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format(_sunup, _sundown)
-
                         sunup = '({0} <= t < {1})'.format(_sunup, _sundown)
                         sundown = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format(_sunup, _sundown)
 
@@ -129,7 +136,7 @@ def main():
         holi = {}
         stdoutdata = {}
         nlines = {}
-        command = "google calendar list --fields name --cal " + "\"" + holidays_calendar + "\"" + " --date "
+        command = "google calendar list --fields name --cal " + holidays_calendar + " --date "
         cmd['yesterday'] = command + (now - timedelta(days=1)).strftime("%Y-%m-%d")
         cmd['today'] = command + "today"
         cmd['tomorrow'] = command + (now + timedelta(days=1)).strftime("%Y-%m-%d")
