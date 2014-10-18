@@ -63,62 +63,66 @@ def main():
                     if line[0][0] != '[':               # If line does not start with '['
                         _sunup = line.split(' ')[1]
                         _sundown = line.split(' ')[4]
-                        sunup = '(\'{0}\' <= t < \'{1}\')'.format(_sunup, _sundown)
-                        sundown = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format(_sunup, _sundown)
+#                        sunup = '(\'{0}\' <= t < \'{1}\')'.format(_sunup, _sundown)
+#                        sundown = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format(_sunup, _sundown)
+
+                        sunup = '({0} <= t < {1})'.format(_sunup, _sundown)
+                        sundown = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format(_sunup, _sundown)
+
 
             t_sunup = datetime.strptime(_sunup, '%H:%M')
             t_sundown = datetime.strptime(_sundown, '%H:%M')
 
-            sunup_minus_10 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_minus_10 = '({0} <= t < {1})'.format((\
 			t_sunup - timedelta(minutes=10)).strftime('%H:%M'), (t_sundown - timedelta(minutes=10)).strftime('%H:%M'))
-            sunup_minus_20 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_minus_20 = '({0} <= t < {1})'.format((\
 			t_sunup - timedelta(minutes=20)).strftime('%H:%M'), (t_sundown - timedelta(minutes=20)).strftime('%H:%M'))
-            sunup_minus_30 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_minus_30 = '({0} <= t < {1})'.format((\
 			t_sunup - timedelta(minutes=30)).strftime('%H:%M'), (t_sundown - timedelta(minutes=30)).strftime('%H:%M'))
-            sunup_minus_40 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_minus_40 = '({0} <= t < {1})'.format((\
 			t_sunup - timedelta(minutes=40)).strftime('%H:%M'), (t_sundown - timedelta(minutes=40)).strftime('%H:%M'))
-            sunup_minus_50 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_minus_50 = '({0} <= t < {1})'.format((\
 			t_sunup - timedelta(minutes=50)).strftime('%H:%M'), (t_sundown - timedelta(minutes=50)).strftime('%H:%M'))
-            sunup_minus_60 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_minus_60 = '({0} <= t < {1})'.format((\
 			t_sunup - timedelta(minutes=60)).strftime('%H:%M'), (t_sundown - timedelta(minutes=60)).strftime('%H:%M'))
 
-            sunup_plus_10 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_plus_10 = '({0} <= t < {1})'.format((\
 			t_sunup + timedelta(minutes=10)).strftime('%H:%M'), (t_sundown + timedelta(minutes=10)).strftime('%H:%M'))
-            sunup_plus_20 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_plus_20 = '({0} <= t < {1})'.format((\
 			t_sunup + timedelta(minutes=20)).strftime('%H:%M'), (t_sundown + timedelta(minutes=20)).strftime('%H:%M'))
-            sunup_plus_30 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_plus_30 = '({0} <= t < {1})'.format((\
 			t_sunup + timedelta(minutes=30)).strftime('%H:%M'), (t_sundown + timedelta(minutes=30)).strftime('%H:%M'))
-            sunup_plus_40 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_plus_40 = '({0} <= t < {1})'.format((\
 			t_sunup + timedelta(minutes=40)).strftime('%H:%M'), (t_sundown + timedelta(minutes=40)).strftime('%H:%M'))
-            sunup_plus_50 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_plus_50 = '({0} <= t < {1})'.format((\
 			t_sunup + timedelta(minutes=50)).strftime('%H:%M'), (t_sundown + timedelta(minutes=50)).strftime('%H:%M'))
-            sunup_plus_60 = '(\'{0}\' <= t < \'{1}\')'.format((\
+            sunup_plus_60 = '({0} <= t < {1})'.format((\
 			t_sunup + timedelta(minutes=60)).strftime('%H:%M'), (t_sundown + timedelta(minutes=60)).strftime('%H:%M'))
 
-            sundown_minus_10 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_minus_10 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup - timedelta(minutes=10)).strftime('%H:%M'), (t_sundown - timedelta(minutes=10)).strftime('%H:%M'))
-            sundown_minus_20 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_minus_20 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup - timedelta(minutes=20)).strftime('%H:%M'), (t_sundown - timedelta(minutes=20)).strftime('%H:%M'))
-            sundown_minus_30 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_minus_30 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup - timedelta(minutes=30)).strftime('%H:%M'), (t_sundown - timedelta(minutes=30)).strftime('%H:%M'))
-            sundown_minus_40 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_minus_40 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup - timedelta(minutes=40)).strftime('%H:%M'), (t_sundown - timedelta(minutes=40)).strftime('%H:%M'))
-            sundown_minus_50 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_minus_50 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup - timedelta(minutes=50)).strftime('%H:%M'), (t_sundown - timedelta(minutes=50)).strftime('%H:%M'))
-            sundown_minus_60 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_minus_60 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup - timedelta(minutes=60)).strftime('%H:%M'), (t_sundown - timedelta(minutes=60)).strftime('%H:%M'))
 
-            sundown_plus_10 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_plus_10 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup + timedelta(minutes=10)).strftime('%H:%M'), (t_sundown + timedelta(minutes=10)).strftime('%H:%M'))
-            sundown_plus_20 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_plus_20 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup + timedelta(minutes=20)).strftime('%H:%M'), (t_sundown + timedelta(minutes=20)).strftime('%H:%M'))
-            sundown_plus_30 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_plus_30 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup + timedelta(minutes=30)).strftime('%H:%M'), (t_sundown + timedelta(minutes=30)).strftime('%H:%M'))
-            sundown_plus_40 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_plus_40 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup + timedelta(minutes=40)).strftime('%H:%M'), (t_sundown + timedelta(minutes=40)).strftime('%H:%M'))
-            sundown_plus_50 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_plus_50 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup + timedelta(minutes=50)).strftime('%H:%M'), (t_sundown + timedelta(minutes=50)).strftime('%H:%M'))
-            sundown_plus_60 = '(\'00:00\' <= t < \'{0}\' or \'{1}\' <= t < \'23:59\')'.format((\
+            sundown_plus_60 = '(00:00 <= t < {0} or {1} <= t < 23:59)'.format((\
 			t_sunup + timedelta(minutes=60)).strftime('%H:%M'), (t_sundown + timedelta(minutes=60)).strftime('%H:%M'))
 
         cmd = {}
