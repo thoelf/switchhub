@@ -28,6 +28,7 @@ from subprocess import Popen
 import sys
 from threading import Thread
 import time
+import traceback
 import logging
 import re
 
@@ -228,7 +229,13 @@ def main():
 		# Operate switches, if there's time for a change
 		# On
 		for item in que:
-			state = eval(que[item].split(';')[1])
+			try:
+				state = eval(que[item].split(';')[1])
+			except:
+				logging.exception("Error while evaluating que")
+				print("Error while evaluating que. Check your event definitions for on.")
+				traceback.print_exc()
+				sys.exit()
 			logger.debug("{0}, {1}, {2}".format(item, str(state), que[item].split(';')[1]))
 			if str(state) != old_state[item].split(';')[1]:
 				sstate = "--on" if state else "--off"
@@ -245,7 +252,13 @@ def main():
 
 		# Only on
 		for item in que_only_on:
-			state = eval(que_only_on[item].split(';')[1])
+			try:
+				state = eval(que_only_on[item].split(';')[1])
+			except:
+				logging.exception("Error while evaluating que_only_on")
+				print("Error while evaluating que_only_on. Check your event definitions for only_on.")
+				traceback.print_exc()
+				sys.exit()
 			logger.debug("{0}, {1}, {2}".format(item, str(state), que_only_on[item].split(';')[1]))
 			if state:
 				logger.info("State change: que_only_on {0} on", item)
@@ -260,7 +273,13 @@ def main():
 	
         # Only off
 		for item in que_only_off:
-			state = eval(que_only_off[item].split(';')[1])
+			try:
+				state = eval(que_only_off[item].split(';')[1])
+			except:
+				logging.exception("Error while evaluating que_only_off")
+				print("Error while evaluating que_only_off. Check your event definitions for only_off.")
+				traceback.print_exc()
+				sys.exit()
 			logger.debug("{0}, {1}, {2}".format(item, str(state), que_only_off[item].split(';')[1]))
 			if state:
 				logger.info("State change: que_only_off {0} off".format(item))
@@ -278,10 +297,16 @@ def main():
 		for item in que_dim:
 			dimmer[que_dim[item].split(';')[0]] = 0  # All dim values for all id's are set to zero
 		for item in que_dim:
-			#For each item (e.g. lampdim_10), dimmer[id] = the value, if the expression if true, otherwise unchanged
-			if eval(que_dim[item].split(';')[1]):
-				if int(dimmer[que_dim[item].split(';')[0]]) < int(que_dim[item].split(';')[2]):
-					dimmer[que_dim[item].split(';')[0]] = que_dim[item].split(';')[2] 
+			try:
+				#For each item (e.g. lampdim_10), dimmer[id] = the value, if the expression if true, otherwise unchanged
+				if eval(que_dim[item].split(';')[1]):
+					if int(dimmer[que_dim[item].split(';')[0]]) < int(que_dim[item].split(';')[2]):
+						dimmer[que_dim[item].split(';')[0]] = que_dim[item].split(';')[2] 
+			except:
+				logging.exception("Error while evaluating que_dim")
+				print("Error while evaluating que_dim. Check your event definitions for dim.")
+				traceback.print_exc()
+				sys.exit()
 
 		if first_run:
 			dimmer_old = dimmer.copy()
