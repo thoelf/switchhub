@@ -3,7 +3,6 @@ log_level = WARNING
 
 [misc]
 event_config = /etc/switchhub/
-party_ends = 02:00
 repeats = 6
 
 [ping_ip]
