@@ -38,7 +38,7 @@ status () {
 if [[ $(pgrep -f switchhub.py) ]]; then
     printf "Switchhub is running with PID: %s\n" $(pgrep -f switchhub.py)
 else
-    printf "\nSwitchhub is not running.\n"
+    printf "Switchhub is not running.\n"
 fi
 }
 
