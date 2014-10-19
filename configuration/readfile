@@ -1,0 +1,7 @@
+[files]
+#party = /run/shm/data/party
+#weather_type = /run/shm/data/weather_type
+
+[default]
+#party = False
+#weather_type = Clear
