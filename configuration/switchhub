@@ -3,7 +3,7 @@ log_level = WARNING
 
 [misc]
 event_config = /etc/switchhub/
-repeats = 6
+repeats = 3
 
 [ping_ip]
 phone = 192.168.1.140
