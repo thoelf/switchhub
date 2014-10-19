@@ -45,13 +45,9 @@ def main():
 
     if minutes < 10:
 
-        # Edit these settings for your location - move to config file
-#        holidays_calendar = "Helgdagar i Sverige"
+        # Read the settings from the gcalendar settings file
         holidays_calendar = confgcal['calendars']['holidays_calendar']
- #       sun_calendar = "Soluppgång och solnedgång för Linköping"
         sun_calendar = confgcal['calendars']['sun_calendar']
-
-#        print(holidays_calendar, sun_calendar)
 
         with open("/etc/switchhub/plugins/gcalendar_holidays", "r") as f:
             holidays = f.read()
