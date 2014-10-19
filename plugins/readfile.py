@@ -18,39 +18,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with SwitchHub. If not, see <http://www.gnu.org/licenses/>. '''
 
-#import configparser
-#import codecs
+import configparser
+import codecs
 import os.path
 
 def main():
-    #variable names and paths to the files with the data
-    files = {"party": "/run/shm/data/party", \
-    "weather_type": "/run/shm/data/weather_type"}
 
-    #Default values, just in case there's no data in the files, or no files
-    values = {"party": "False", "weather_type": "Clear"}
+	# Initialize config parser for the readfiles settings file
+    confreadfile = configparser.ConfigParser()
+    confreadfile.readfp(codecs.open("/etc/switchhub/plugins/readfile", "r", "utf8"))
 
-    for var, fil in files.items():
-        if os.path.isfile(fil):
-            with open(fil, "r") as f:
-                print("readfile.py;" + var + ";" + f.readline())
-        else:
-            print("readfile.py;" + var + ";" + values[var])
-
-
-
-#    files = {}
-
-#    confreadfiles = configparser.ConfigParser()
-#    confreadfiles.readfp(codecs.open("/etc/switchhub/plugins/readfile", "r", "utf8"))
-
-#    with open("/etc/switchhub/plugins/readfile", "r") as f:
-#        for item in confreadfiles['files']:
-#            try:
-#                with open(confreadfiles['files'][item], "r") as varf:
-#                    print("readfile.py;" + item + ";" + varf.readline())
-#            except:
-#                pass
+    for fil in confreadfile['files']:
+        if os.path.isfile(confreadfile['files'][fil]):
+            with open(confreadfile['files'][fil], "r") as f:
+                print("readfile.py;" + fil + ";" + f.readline())
+        else:                
+            print("readfile.py;" + fil + ";" + confreadfile['default'][fil])
 
 if __name__ == "__main__":
     main()
