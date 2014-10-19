@@ -5,7 +5,7 @@ SwitchHub is a command line application for Linux (exclusively for the time bein
 The scheduling of events (i.e. scheduling switches to turn on or off or dim) is made by creating Boolean
 expressions, one per switch. An event definition can look like this:
 
-*on = "06:00" <= t < "07:15" and sundown*
+*on = 06:00 <= t < 07:15 and sundown*
 
 Here are some of the important characteristics of SwitchHub:
 - SwitchHub is lightweight and will not use much of your system's resources.
