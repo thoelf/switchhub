@@ -61,7 +61,7 @@ fi
 chgrp -R switchhub *
 
 if [[ -d "/etc/logrotate.d" ]]; then
-    mv -v switchhub_logrotate /etc/logrotate.d/switchhub
+    mv -v switchhub /etc/logrotate.d/switchhub
 else
     printf "Warning: The directory /etc/logrotate.d/ does not exist. Could not copy the log rotate configuration file."
 fi
