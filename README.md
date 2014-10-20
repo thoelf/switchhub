@@ -27,7 +27,7 @@ The program works very well, and have done so for several months. Most major fun
 - Dimmer support.
 - Better logging of errors when evaluating the event expressions.
 - New plugin readfile, lets SwitchHub read variable values from any file.
-- Do not crach when there is no internet connection (plugin gcalendar).
+- Do not crash when there is no internet connection (plugin gcalendar).
 - Simplified syntax for event expressions.
 
 ###SwitchHub 0.3
