@@ -28,6 +28,7 @@ The program works very well, and have done so for several months. Most major fun
 - Better logging of errors when evaluating the event expressions.
 - New plugin readfile, lets SwitchHub read variable values from any file.
 - Do not crach when there is no internet connection (plugin gcalendar).
+- Simplified syntax for event expressions.
 
 ###SwitchHub 0.3
 It is now possible to use plug-ins. A plug-in is a program/script that provides variables that can be used in the event definitions. The module for communication with Google Calendar has been transformed to a plug-in.
