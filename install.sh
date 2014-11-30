@@ -71,8 +71,8 @@ cp ./configuration/events ./configuration/switchhub "$SETTINGS_DIR"
 chgrp -R switchhub "$SETTINGS_DIR"
 chmod -R g+w "$SETTINGS_DIR"
 
-mkdir -p "$SETTINGS_DIR_PLUGINS"/gcalendar
-cp ./configuration/gcalendar ./configuration/gcalendar_free_days ./configuration/gcalendar_holidays "$SETTINGS_DIR_PLUGINS"
+mkdir -p "$SETTINGS_DIR_PLUGINS"
+cp ./configuration/calendar ./configuration/calendar_free_days ./configuration/calendar_holidays ./configuration/suntime ./configuration/readfile "$SETTINGS_DIR_PLUGINS"
 chgrp -R switchhub "$SETTINGS_DIR_PLUGINS"
 chmod -R g+w "$SETTINGS_DIR_PLUGINS"
 
@@ -81,7 +81,7 @@ chgrp switchhub "$INSTALL_DIR"
 chmod g+w "$INSTALL_DIR"
 
 mkdir -p "$PLUGINS_DIR"
-cp ./plugins/gcalendar.py "$PLUGINS_DIR"
+cp ./plugins/suntime.py ./plugins/cal.py ./plugins/readfile.py "$PLUGINS_DIR"
 chgrp -R switchhub "$PLUGINS_DIR"
 chmod -R g+w "$PLUGINS_DIR"
 

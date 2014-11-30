@@ -12,17 +12,20 @@ Here are some of the important characteristics of SwitchHub:
 - The scheduling of events is very flexible. This is because:
 	- The amount of meaningful variables.
 	- You have a high degree of freedom when you write the Boolean expressions.
-- You can easily add your own plugins to let SwitchHub use variables of your liking.
+- You can easily add your own plugins (in any programming language) to let SwitchHub use variables of your liking.
 - SwitchHub will run unattended. Once configured, SwitchHub will be out of your way.
 - SwitchHub does not have a GUI. You will edit text files to configure SwitchHub and the events.
 - SwitchHub is written in Python 3. This is only of interest if you want to read the code or make changes to it.
 
 For more information, refer to [SwitchHub.pdf](https://github.com/thoelf/switchhub/blob/master/SwitchHub.pdf) and to the list of [issues](https://github.com/thoelf/switchhub/issues).
 
-##Status
-The program works very well, and have done so for several months. Most major functions are implemented. Cleaning up and making the code pretty still remains. I'm not sure that the installation script works perfectly. Should use a deb package instead... The manual updates are lagging a bit, but the code should be self-explaining. ;-)
+###Status
+The application works very well. Some more fault handling for unexpected events wouldn't hurt though. The installation script is not guaranteed to work, but it's a good start.
 
 ##Updates
+###SwitchHub 0.41
+- Replaced the gcalendar plugin with two other plugins (suntime.py and cal.py). These plugins provides the variables for sunrise/sunset and holidays. Refer to issue 20.
+
 ###SwitchHub 0.4
 - Dimmer support.
 - Better logging of errors when evaluating the event expressions.
