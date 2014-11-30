@@ -136,10 +136,10 @@ def main():
                         break
 
 
-    print("calendar.py;holiday_yesterday;{0}".format(holiday['yesterday']))
-    print("calendar.py;holiday_today;{0}".format(holiday['today']))
-    print("calendar.py;holiday_tomorrow;{0}".format(holiday['tomorrow']))
-    print("calendar.py;workday;{0}".format(not holiday['today']))
+    print("cal.py;holiday_yesterday;{0}".format(holiday['yesterday']))
+    print("cal.py;holiday_today;{0}".format(holiday['today']))
+    print("cal.py;holiday_tomorrow;{0}".format(holiday['tomorrow']))
+    print("cal.py;workday;{0}".format(not holiday['today']))
 
 if __name__ == "__main__":
     main()
