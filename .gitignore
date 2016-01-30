@@ -9,6 +9,8 @@ updates
 _install.sh
 _events.cfg
 _program.cfg
+git
+github
 *.py[cod]
 
 # C extensions

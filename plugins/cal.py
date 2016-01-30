@@ -36,43 +36,41 @@ def main():
     confcal.readfp(codecs.open("/etc/switchhub/plugins/calendar", "r", "utf8"))
     calurl = confcal['settings']['url']
 
-    # Wait until www.webcal.fi can be reached or wait 10 minutes.
-    # The whole program will wait, so we don't want to wait too long.
-    # If the connection cannot be established, switchhub will use the existing (old) values.
-    # If there are no old values (first run), switchhub will crash if variables in the
-    # events configuration file becomes undefined.
-
-#    minutes = 0
-#    while os.system("ping -c 1 www.webcal.fi >/dev/null") and minutes < 10:
-#        time.sleep(60)
-#        minutes += 1
-#    if minutes < 10:
-
     now = datetime.now()
 
     if not os.path.exists('/run/shm/data'):
         os.mkdir('/run/shm/data')
 
-    if os.path.exists('/run/shm/data/calendar.json'):
-        if now.year != time.ctime(os.path.getctime('/run/shm/data/calendar.json')).split()[4]:
+    if os.path.exists('/run/shm/data/calendar.json') and os.stat("/run/shm/data/calendar.json").st_size > 0:
+        if str(now.year) != time.ctime(os.path.getctime('/run/shm/data/calendar.json')).split()[4]:
             try:
-                urllib.request.urlretrieve(calurl, '/run/shm/data/calendar.json')
+            # Wait until www.webcal.fi can be reached or wait 5 minutes.
+            # The whole program will wait, so we don't want to wait too long.
+            # If the connection cannot be established, switchhub will use the existing calendar.
+            # If there is no old calendar (first run), SwitchHub will propably crash.
+                minutes = 0
+                while os.system("ping -c 1 www.webcal.fi >/dev/null") and minutes < 5:
+                    time.sleep(30)
+                    minutes += 0.5
+                if minutes < 5:
+                    urllib.request.urlretrieve(calurl, '/run/shm/data/calendar.json')
             except:
                 pass
     else:
         open('/run/shm/data/calendar.json', 'a').close()
         try:
-            urllib.request.urlretrieve(calurl, '/run/shm/data/calendar.json')
+            minutes = 0
+            while os.system("ping -c 1 www.webcal.fi >/dev/null") and minutes < 5:
+                time.sleep(30)
+                minutes += 0.5
+            if minutes < 5:
+                urllib.request.urlretrieve(calurl, '/run/shm/data/calendar.json')
         except:
             pass
 
-    try:
-        with open ('/run/shm/data/calendar.json', 'r') as calfile:
-            data = calfile.read()
-            theJSON = json.loads(data)
-    except:
-        pass
-
+    with open ('/run/shm/data/calendar.json', 'r') as calfile:
+        data = calfile.read()
+        theJSON = json.loads(data)
 
     calholi = {}
     calholi['yesterday'] = calholi['today'] = calholi['tomorrow'] = "No holiday"
@@ -84,18 +82,12 @@ def main():
         if theJSON[n]['date'] == (now + timedelta(days=1)).strftime('%Y-%m-%d'):
             calholi['tomorrow'] = theJSON[n]['name']
 
-#        print(theJSON[n]['date'])
-#        print(theJSON[n]['2014-12-25'])
-#        print(theJSON[n]['name'])
-
-
     # Read the settings from the calendar settings file
     with open("/etc/switchhub/plugins/calendar_holidays", "r") as f:
         holidays = f.read()
 
     with open("/etc/switchhub/plugins/calendar_free_days", "r") as f:
         free_days = f.read()
-
 
     holiday = {}
     holiday['yesterday'] = holiday['today'] = holiday['tomorrow'] = False
@@ -109,10 +101,8 @@ def main():
     for day in days:
         holiday[day] = True if 5 <= days[day].weekday() <= 6 else False
 
-
     # Check holiday from calendar that matches holidays.cfg
     for day in holiday:
-#        print(day) => yesterday, today, tomorrow
         if not holiday[day]:
             for line in holidays.splitlines():
                 if line.strip():
@@ -134,7 +124,6 @@ def main():
                     if line.split(':')[0] <= days[day].strftime("%Y-%m-%d") <= line.split(':')[1]:
                         holiday[day] = True
                         break
-
 
     print("cal.py;holiday_yesterday;{0}".format(holiday['yesterday']))
     print("cal.py;holiday_today;{0}".format(holiday['today']))
