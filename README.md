@@ -23,6 +23,10 @@ For more information, refer to [SwitchHub.pdf](https://github.com/thoelf/switchh
 The application works very well. Some more fault handling for unexpected events wouldn't hurt though. The installation script is not guaranteed to work, but it's a good start.
 
 ##Updates
+###SwitchHub 0.42
+- Configurable turnaround time to handle sensors or events that requires a fast response.
+- A new plugin directory that is run at every turnaround.
+
 ###SwitchHub 0.41
 - Replaced the gcalendar plugin with two other plugins (suntime.py and cal.py). These plugins provides the variables for sunrise/sunset and holidays. Refer to issue 20.
 
