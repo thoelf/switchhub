@@ -85,6 +85,10 @@ cp ./plugins/suntime.py ./plugins/cal.py ./plugins/readfile.py "$PLUGINS_DIR"
 chgrp -R switchhub "$PLUGINS_DIR"
 chmod -R g+w "$PLUGINS_DIR"
 
+mkdir -p "$PLUGINS_DIR"/always
+chgrp switchhub "$PLUGINS_DIR"/always
+chmod g+w "$PLUGINS_DIR"/always
+
 mkdir -p "$PLUGINS_DIR"/1minute
 chgrp switchhub "$PLUGINS_DIR"/1_minute
 chmod g+w "$PLUGINS_DIR"/1minute

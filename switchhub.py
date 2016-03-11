@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# Copyright 2014 Thomas Elfström
+# Copyright 2016 Thomas Elfström
 # switchhub.py
 
 ''' This file is part of SwitchHub.
@@ -27,6 +27,7 @@ import subprocess
 from subprocess import Popen
 import sys
 from threading import Thread
+import threading
 import time
 import traceback
 import logging
@@ -55,8 +56,17 @@ def main():
 	logger = logging.getLogger(__name__)
 	logger.setLevel(confprg['logging']['log_level'])
 
+#	global first_run
+	global day
+	global plugin_dir
+	plugin_dir = 5
+	global count
+	count = 0
+
 	logger.info('SwitchHub started')
 	first_run = True
+	now = datetime.now()
+	day = now.strftime("%d")
 	que = {}
 	que_only_on = {}
 	que_only_off = {}
@@ -75,10 +85,14 @@ def main():
 	diff_dim = {}
 	for host in confprg['ping_ip']:
 		ping_timer[host] = 0
-	plugin_dirs = ["/opt/switchhub/plugins/1_minute/",
+	plugin_dirs = ["/opt/switchhub/plugins/always/",
+					"/opt/switchhub/plugins/1_minute/",
 					"/opt/switchhub/plugins/15_minutes/",
 					"/opt/switchhub/plugins/hour/",
 					"/opt/switchhub/plugins/day/"]
+
+	# Read the loop turnaround time from the switchhub config file
+	turnaround_time = float(confprg['timer']['turn_around'])
 
 	# Initialize old_state for on that is used to see if the state for on has been changed
 	for key in confev.sections():
@@ -91,29 +105,36 @@ def main():
 #		except KeyError:
 #			random[key] = 0
 
+	def every_minute():
+		t60 = threading.Timer(60, every_minute)
+		t60.start()
+		global count
+		global day
+		global plugin_dir
+		if (now.strftime("%H:%M") == "00:00" and day != now.strftime("%d")):
+			day = now.strftime("%d")
+			plugin_dir = 5
+			count = 0
+		elif count == 0 or count == 15 or count == 30 or count == 45:
+			plugin_dir = 3
+		elif count == 60:
+			plugin_dir = 4
+			count = 0
+		else:
+			plugin_dir = 2
+		count += 1
+
+	t60 = threading.Timer(60, every_minute)
+	t60.start() 
+
 	print("SwitchHub started.\n")
 	print("If you started SwitchHub with switchhub.sh start,\npress Ctrl+A D to detach SwitchHub from the terminal.\n")
 
 	while True:
 		now = datetime.now()
+		t = now.strftime("%H:%M")	# t is used as a variable in events.cfg
 
-		###Get data from the plugins. First, determine depending on the time, which directories to look for plugins in.
-		# Each day at 00:00 or at first run, look in all directories
-		if (now.strftime("%H:%M") == "00:00") or first_run: 
-			x = 4
-		# Each full hour, look in the directories hour, 15_minutes and 1_minute.
-		elif (now.strftime("%M") == "00"):
-			x = 3
-		# Each full quarter, look in the directories 15_minutes and 1_minute.
-		elif (now.strftime("%M") == "15") or (now.strftime("%M") == "30") or (now.strftime("%M") == "45"):
-			x = 2
-		# Each full minute, look in the directory 1_minute
-		else:
-			x = 1
-		plugin_data = get_plugin_data.data(plugin_dirs, first_run, logger, plugin_data, x)
-		logger.debug("Plugin data: {0}".format(plugin_data))
-
-		if (now.strftime("%H:%M") == "00:00") or first_run: # or not data_read:
+		if plugin_dir == 5:
 			# Update variables
 			weekday = True if 0 <= now.weekday() < 5 else False
 			monday = True if now.weekday() == 0 else False
@@ -135,6 +156,11 @@ def main():
 			october = True if now.month == 10 else False
 			november = True if now.month == 11 else False
 			december = True if now.month == 12 else False
+
+		###Get data from the plugins
+		plugin_data = get_plugin_data.data(plugin_dirs, first_run, logger, plugin_data, plugin_dir)
+		plugin_dir = 1
+#		logger.debug("Plugin data: {0}".format(plugin_data))
 
 		# Re-build the event expressions each time there is new plug-in data or at first run.
 		if (plugin_data_old != plugin_data) or first_run:
@@ -208,8 +234,6 @@ def main():
 				except KeyError:
 					pass
 
-
-		t = now.strftime("%H:%M")	# t is used as a variable in events.cfg
 
 		for host in confprg['ping_ip']:
 			if host[0] != '#':
@@ -329,8 +353,9 @@ def main():
 
 		first_run = False
 		
-		while now.strftime("%M") == datetime.now().strftime("%M"):
-			time.sleep(1)
+#		while now.strftime("%M") == datetime.now().strftime("%M"):
+#			time.sleep(1)
+		time.sleep(turnaround_time)
 
 if __name__ == "__main__":
     main()
