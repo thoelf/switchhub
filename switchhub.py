@@ -85,7 +85,7 @@ def main():
 	diff_dim = {}
 	for host in confprg['ping_ip']:
 		ping_timer[host] = 0
-	plugin_dirs = ["/opt/switchhub/plugins/always/",
+	plugin_dirs = ["/opt/switchhub/plugins/every_time/",
 					"/opt/switchhub/plugins/1_minute/",
 					"/opt/switchhub/plugins/15_minutes/",
 					"/opt/switchhub/plugins/hour/",
