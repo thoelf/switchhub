@@ -40,6 +40,7 @@ import get_plugin_data
 def main():
 
 	# Initialize config parser for program.cfg
+	global confprg
 	confprg = configparser.ConfigParser()
 #	confprg.read("program.cfg")
 	confprg.readfp(codecs.open("/etc/switchhub/switchhub", "r", "utf8"))
@@ -72,6 +73,7 @@ def main():
 	que_only_off = {}
 	que_dim = {}
 	old_state = {}
+	global pping
 	pping = {}
 	ping = {}
 	ping_timer = {}
@@ -105,9 +107,29 @@ def main():
 #		except KeyError:
 #			random[key] = 0
 
+	def thread_ping():
+		global pping
+		global confprg
+		for host in confprg['ping_ip']:
+			if host[0] != '#':
+				pping[host] = True if os.system("ping -c 1 " + confprg['ping_ip'][host] + " > /dev/null") == 0 else False
+
+		# Delay the state of ping to go from True to False
+		for host in pping:
+			if pping[host]:
+				ping[host] = True
+				ping_timer[host] = int(confprg['timer']['ping_off_delay'])
+			elif (not pping[host]) and (ping_timer[host] > 0):
+				ping_timer[host] -= 1
+				ping[host] = True
+			else:
+				ping[host] = False
+
 	def every_minute():
 		t60 = threading.Timer(60, every_minute)
 		t60.start()
+		tping = threading.Timer(60, thread_ping)
+		tping.start()
 		global count
 		global day
 		global plugin_dir
@@ -129,6 +151,10 @@ def main():
 
 	print("SwitchHub started.\n")
 	print("If you started SwitchHub with switchhub.sh start,\npress Ctrl+A D to detach SwitchHub from the terminal.\n")
+
+	for host in confprg['ping_ip']:
+		if host[0] != '#':
+			pping[host] = True if os.system("ping -c 1 " + confprg['ping_ip'][host] + " > /dev/null") == 0 else False
 
 	while True:
 		now = datetime.now()
@@ -233,22 +259,6 @@ def main():
 									que_dim[key + value] = re.sub(r"'+", r"'", que_dim[key + value])
 				except KeyError:
 					pass
-
-
-		for host in confprg['ping_ip']:
-			if host[0] != '#':
-				pping[host] = True if os.system("ping -c 1 " + confprg['ping_ip'][host] + " > /dev/null") == 0 else False
-
-		# Delay the state of ping to go from True to False
-		for host in pping:
-			if pping[host]:
-				ping[host] = True
-				ping_timer[host] = int(confprg['timer']['ping_off_delay'])
-			elif (not pping[host]) and (ping_timer[host] > 0):
-				ping_timer[host] -= 1
-				ping[host] = True
-			else:
-				ping[host] = False
 
 		# Operate switches, if there's time for a change
 		# On
