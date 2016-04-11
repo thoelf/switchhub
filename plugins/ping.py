@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright 2016 Thomas Elfström
-# readfile.py
+# ping.py
 
 ''' This file is part of SwitchHub.
 
@@ -20,32 +20,38 @@ along with SwitchHub. If not, see <http://www.gnu.org/licenses/>. '''
 
 
 import os
-import os.path
 import socket
-import sys
 import time
 
 
 def main():
-	files = {'party': '/run/shm/data/party'}
-	default = {'party': 'False'}
+	hosts = {'t': '192.168.1.100',
+			't_lap': '192.168.1.101',
+			't_n5': '192.168.1.155',
+			'm_lap': '192.168.1.180',
+			'm_n5x': '192.168.1.181'}
+
 	server_address = ('localhost', 8001)
-	read_interval = 60
+	ping_interval = 60
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect(server_address)
 
 	ownfile = os.path.basename(__file__)
 
+	# Send fast once
+	for host in hosts:
+		message = ownfile + ";ping_" + host + ";False"
+		s.send(bytes(message + "\n", 'UTF-8'))
+
 	while True:
-		for key in files:
-			if os.path.isfile(files[key]):
-				with open(files[key], "r") as f:
-					message = ownfile + ";" + key + ";" + f.readline()
-			else:
-				message = ownfile + ";" + key + ";" + default[key]
+		t_end = time.monotonic() + ping_interval
+		for host in hosts:
+			ping = True if os.system("ping -c 1 " + hosts[host] + " > /dev/null") == 0 else False
+			message = ownfile + ";ping_" + host + ";" + str(ping)
 			s.send(bytes(message + "\n", 'UTF-8'))
-		time.sleep(read_interval)
+		while time.monotonic() < t_end:
+			time.sleep(1)
 
 if __name__ == "__main__":
 	main()

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright 2016 Thomas Elfström
 # switchhub.py
@@ -18,354 +18,337 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with SwitchHub. If not, see <http://www.gnu.org/licenses/>. '''
 
-import configparser
-import codecs
 from datetime import datetime
+import codecs
+import configparser
+import logging
 import os
-from os import path
+import queue
+import random
+import re
+import select
+import socket
 import subprocess
-from subprocess import Popen
 import sys
 from threading import Thread
-import threading
 import time
 import traceback
-import logging
-import re
 
-import operate_switch
-import get_plugin_data
+
+class switch:
+	def __init__(self, events):
+		self.events = events
+		self.name = events['name']
+		self.events.pop('name')
+		self.idno = events['id']
+		self.events.pop('id')
+		self.state = 0
+		self.old_state = None
+		self.eventsd = {}
+#		for key in self.events.keys():
+#			self.eventsd.update({key: events[key]})  # eventsd är dict med t ex 'on' och 'dim_50' som keys. data är eventuttryck
+#		key_temp = {}
+#		for key in self.eventsd.keys():  # byt namn på keys
+#			if key == "only_on":
+#				key_temp.update({key: "1001"})
+#			elif key == "on":
+#				key_temp.update({key: "1000"})
+#			elif key == "only_off":
+#				key_temp.update({key: "0"})
+#			else:
+#				key_temp.update({key: re.sub(r'dim_', "", key)})
+#		for key in key_temp.keys():
+#			self.eventsd[key_temp[key]] = self.eventsd.pop(key)
+
+	def update(self, timestamp, t, plugin_data):
+		for key in self.events.keys():
+			self.eventsd.update({key: self.events[key]})  # eventsd är dict med t ex 'on' och 'dim_50' som keys. data är eventuttryck
+		key_temp = {}
+		for key in self.eventsd.keys():  # Change key names
+			if key == "only_on":
+				key_temp.update({key: "1001"})
+			elif key == "on":
+				key_temp.update({key: "1000"})
+			elif key == "only_off":
+				key_temp.update({key: "0"})
+			else:
+				key_temp.update({key: re.sub(r'dim_', "", key)})
+		for key in key_temp.keys():
+			self.eventsd[key_temp[key]] = self.eventsd.pop(key)
+
+		for key in self.eventsd:
+			for pkey in plugin_data:
+				if pkey in self.eventsd[key]:
+					self.eventsd[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], self.eventsd[key])
+			self.eventsd[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", self.eventsd[key])
+			self.eventsd[key] = re.sub(r"'+", r"'", self.eventsd[key])
+			self.eventsd[key] = re.sub(r'(\\+\n)', "", self.eventsd[key])
+
+		only_on = False
+		on = False
+		dim_old = 0
+		dim = 0
+		only_off = False
+#		for key in sorted(self.eventsd):
+		for key in self.eventsd:
+			if key == "1001" and eval(self.eventsd[key]):
+				only_on = True
+			elif key == "1000" and eval(self.eventsd[key]):
+#				print(key, eval(self.eventsd[key]), self.eventsd[key])
+				on = True
+			elif (1 <= int(key) <= 999) and eval(self.eventsd[key]) and int(key) > int(dim_old):
+				dim = key
+				dim_old = dim
+			elif key == "0" and eval(self.eventsd[key]):
+				only_off = True
+
+		if self.state == 0:
+			if on:
+				self.state = 2
+			elif only_on and not on and not only_off and not dim:
+				self.state = 3
+			elif dim and not on:
+				self.state = 4
+			elif only_off and not on and not only_on and not dim:
+				self.state = 5
+		elif self.state == 1:
+			if on:
+				self.state = 2
+			elif only_on and not on and not only_off and not bool(dim):
+				self.state = 3
+			elif bool(dim) and not on:
+				self.state = 4
+			elif only_off and not on and not only_on and not bool(dim):
+				self.state = 5
+		elif self.state == 2:
+			if not on and not bool(dim):
+				self.state = 1
+			elif bool(dim) and not on:
+				self.state = 4
+			elif only_off and not on and not only_on and not bool(dim):
+				self.state = 5
+		elif self.state == 3:
+			if on:
+				self.state == 2
+			elif bool(dim) and not on:
+				self.state = 4
+			elif only_off and not bool(dim) and not only_on and not on:
+				self.state = 5
+			else:
+				self.state = 0
+		elif self.state == 4:
+			if not bool(dim) and not on:
+				self.state = 1
+			elif on:
+				self.state = 2
+			elif only_off and not on and not only_on and not bool(dim):
+				self.state = 5
+		else:  #elif self.state == 5:
+			if on:
+				self.state = 2
+			elif only_on and not bool(dim) and not only_off and not on:
+				self.state = 3
+			elif bool(dim) and not on:
+				self.state = 4
+			else:
+				self.state = 0
+
+		cmd = ""
+		if self.state != self.old_state:
+			if self.state == 0:
+				print(timestamp + "  " + self.name + " " * (20 - len(self.name)) + " waiting")
+			elif self.state == 2 or self.state == 3:
+				cmd = "tdtool --on " + self.idno + " > /dev/null"
+				print(timestamp + "  " + self.name + " " * (20 - len(self.name)) + " on")
+			elif self.state == 4:
+				cmd = "tdtool --dimlevel " + str(dim) + " --dim " + self.idno + " > /dev/null"
+				print(timestamp + "  " + self.name + " " * (20 - len(self.name)) + " dim " + str(dim))
+			else:  # elif self.state == 1 or self.state == 5:
+				cmd = "tdtool --off " + self.idno + " > /dev/null"
+				print(timestamp + "  " + self.name + " " * (20 - len(self.name)) + " off")
+		self.old_state = self.state
+		return(cmd)
+
+# varför två on states och två off states... för att inte gå till off efter att only_on gått från True till False och vice versa för only_off
 
 
 def main():
 
+	print("\n********************** \033[92mSWITCHHUB\033[0m **********************\n")
+	print("If you started SwitchHub with 'switchhub.sh start',\npress 'Ctrl+A D' to detach SwitchHub from the terminal.\n")
+
 	# Initialize config parser for program.cfg
-	global confprg
-	confprg = configparser.ConfigParser()
-#	confprg.read("program.cfg")
+	confprg = configparser.ConfigParser(allow_no_value = True)
 	confprg.readfp(codecs.open("/etc/switchhub/switchhub", "r", "utf8"))
+
+	# Read the switchhub configuration file
+	log_level = confprg['settings']['log_level']
+	transmits = int(confprg['settings']['transmits'])
+	events_dir = confprg['settings']['event_config']
+	receive_buf = int(confprg['settings']['receive_buf'])
+	port = int(confprg['settings']['port'])
+	plugin_wait = int(confprg['settings']['wait for plugins'])
+	plugins = []
+	for plugin in list(confprg['plugins'].items()):
+		plugins.append(plugin[1])
+	plugins.sort()
 
 	# Initialize config parser for events.cfg
 	confev = configparser.ConfigParser(allow_no_value = True)
-#	confev.read("events.cfg")
-	confev.readfp(codecs.open(confprg['misc']['event_config'] + "events", "r", "utf8"))
+	confev.readfp(codecs.open(events_dir + "events", "r", "utf8"))
 
 	# Initialize logging
 	logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
 		datefmt='%Y-%m-%d %H:%M:%S',
 		filename="/var/log/switchhub.log")
 	logger = logging.getLogger(__name__)
-	logger.setLevel(confprg['logging']['log_level'])
-
-#	global first_run
-	global day
-	global plugin_dir
-	plugin_dir = 5
-	global count
-	count = 0
-
+	logger.setLevel(log_level)
 	logger.info('SwitchHub started')
+
+	global data
+	data = 0
+	global first_run
 	first_run = True
 	now = datetime.now()
-	day = now.strftime("%d")
 	que = {}
 	que_only_on = {}
 	que_only_off = {}
 	que_dim = {}
 	old_state = {}
-	global pping
-	pping = {}
-	ping = {}
-	ping_timer = {}
+	global plugin_data
 	plugin_data = {}
-	plugin_data_old = {}
-#	random = {}
+	plugin_data_old = {"just":"anything"}
 	sim = False
 	thread = {}
 	dimmer = {}
 	dimmer_old = {}
-	diff_dim = {}
-	for host in confprg['ping_ip']:
-		ping_timer[host] = 0
-	plugin_dirs = ["/opt/switchhub/plugins/every_time/",
-					"/opt/switchhub/plugins/1_minute/",
-					"/opt/switchhub/plugins/15_minutes/",
-					"/opt/switchhub/plugins/hour/",
-					"/opt/switchhub/plugins/day/"]
 
-	# Read the loop turnaround time from the switchhub config file
-	turnaround_time = float(confprg['timer']['turn_around'])
 
-	# Initialize old_state for on that is used to see if the state for on has been changed
-	for key in confev.sections():
-		old_state[key] = confev[key]['id'] + ";Old on state"
+	def operate_switch(cmd, transmits, sim):
+		for i in range(transmits):
+			if not sim:
+				subprocess.call([cmd], shell=True)
+				time.sleep(random.uniform(0.5, 5))
 
-	# Read the random settings for the devices from the events definitions file
-#	for key in confev.sections():
-#		try:
-#			random[key] = int(confev[key]["random"])
-#		except KeyError:
-#			random[key] = 0
+	def socket_server():
+		global data
+		global first_run
+		global plugin_data
+		while inputs:
+			# Wait for at least one of the sockets to be ready for processing
+			readable, writable, exceptional = select.select(inputs, outputs, inputs)
+			time.sleep(0.1)  # If no delay, CPU runs at nearly 100 %
+			# Handle inputs
+			for s in readable:
+				if s is server:
+			# A "readable" server socket is ready to accept a connection
+					connection, client_address = s.accept()
+					connection.setblocking(0)
+					inputs.append(connection)
+				# Give the connection a queue for data we want to send
+					message_queues[connection] = queue.Queue()
+				else:
+					data = s.recv(receive_buf)
+					if data:
+				# A readable client socket has data
+						message_queues[s].put(data)
+						#for line in lines.splitlines():
+						for line in ((data).decode('UTF-8')).splitlines():
+							if line.strip():
+								if (len(line.split(";")) == 3):  # and (f == line.split(";")[0]):
+									plugin = line.split(";")[0]
+									var_name = line.split(";")[1]
+									if first_run:
+										first_char = var_name[0]
+										if first_char.isdigit():
+											logger.critical("The variable {0} from the plugin {1} starts with a digit! Alphanumeric character was expected.".format(var_name, plugin))
+											print("CRITICAL: The variable {0} from the plugin {1}\nstarts with a digit! Alphanumeric character was expected.".format(var_name, plugin))
+											sys.exit()
+									var_value = line.split(";")[2]
+									if first_run and (var_name in locals() or var_name in globals()):
+										logger.critical("The variable {0} from the plugin {1} is already in use!".format(var_name, plugin))
+										print("CRITICAL: The variable {0} from the plugin {1} is already in use!".format(var_name, plugin))
+										sys.exit()
+									plugin_data[var_name] = var_value
+#									logger.debug("From plugin {0}, plugin_data['{1}'] = {2}.".format(plugin, var_name, var_value))
+								else:
+									logger.info("Bogous data was read and discarded from plugin {0}.".format(plugin))
 
-	def thread_ping():
-		global pping
-		global confprg
-		for host in confprg['ping_ip']:
-			if host[0] != '#':
-				pping[host] = True if os.system("ping -c 1 " + confprg['ping_ip'][host] + " > /dev/null") == 0 else False
+				# Add output channel for response
+						if s not in outputs:
+							outputs.append(s)
 
-		# Delay the state of ping to go from True to False
-		for host in pping:
-			if pping[host]:
-				ping[host] = True
-				ping_timer[host] = int(confprg['timer']['ping_off_delay'])
-			elif (not pping[host]) and (ping_timer[host] > 0):
-				ping_timer[host] -= 1
-				ping[host] = True
-			else:
-				ping[host] = False
+	# Create a TCP/IP socket
+	server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	server.setblocking(0)
 
-	def every_minute():
-		t60 = threading.Timer(60, every_minute)
-		t60.start()
-		tping = threading.Timer(60, thread_ping)
-		tping.start()
-		global count
-		global day
-		global plugin_dir
-		if (now.strftime("%H:%M") == "00:00" and day != now.strftime("%d")):
-			day = now.strftime("%d")
-			plugin_dir = 5
-			count = 0
-		elif count == 0 or count == 15 or count == 30 or count == 45:
-			plugin_dir = 3
-		elif count == 60:
-			plugin_dir = 4
-			count = 0
-		else:
-			plugin_dir = 2
-		count += 1
+	# Bind the socket to the port
+	server_address = ('localhost', port)
+	print(("Starting plugin server on {0} port {1}.\n".format(server_address[0], server_address[1])))
+	server.bind(server_address)
+	server.listen(5)  # Listen for incoming connections
+	inputs = [server]  # Sockets from which we expect to read
+	outputs = []  # Sockets to which we expect to write
+	message_queues = {}  # Outgoing message queues (socket:Queue)
 
-	t60 = threading.Timer(60, every_minute)
-	t60.start() 
+	Thread(target = socket_server).start()
 
-	print("SwitchHub started.\n")
-	print("If you started SwitchHub with switchhub.sh start,\npress Ctrl+A D to detach SwitchHub from the terminal.\n")
+	#start any plugins
+	if plugins:
+		print("Starting plugins:")
+		for plugin in plugins:
+			subprocess.Popen([plugin], stdout=subprocess.DEVNULL)
+			print((" * " + os.path.basename(plugin)))
+		print("\n")
+		time.sleep(plugin_wait)
+	else:
+		print("No plugins to start. Using time (t) as the only variable.\n")
 
-	for host in confprg['ping_ip']:
-		if host[0] != '#':
-			pping[host] = True if os.system("ping -c 1 " + confprg['ping_ip'][host] + " > /dev/null") == 0 else False
+	# Create switch objects with their own event list
+	# Create dict with events idno:expr
+	eventdict = {}
+	for section in confev.sections():
+		sectiondict = {}
+		sectiondict.update({"name": section})
+		sectiondict.update({'id': confev[section]['id']})
+		if confev[section]['id']:
+			for (key, val) in confev.items(section):
+				if key != "id":
+					sectiondict.update({key: val})
+			eventdict.update({confev[section]['id']: sectiondict})
+
+	# Remove switches without events
+	dicttemp = {}
+	dicttemp.update(eventdict)
+	for key in dicttemp.keys():
+		if not dicttemp[key]:
+			eventdict.pop(key)
+
+	# Create a list of switch objects
+	objectlist = []
+	for key in eventdict.keys():
+		x_obj = switch(eventdict[key])  # Crete an object per idno with an eventdict including events for the idno
+		objectlist.append(x_obj)        # eventdict = dict with all events for the idno, and the idno and the name of the section, e.g. lamp bedroom
+
 
 	while True:
+		minutetimer = time.monotonic()
+		while (plugin_data == plugin_data_old) and (time.monotonic() - minutetimer < 59.95):
+			time.sleep(0.1)
+
 		now = datetime.now()
 		t = now.strftime("%H:%M")	# t is used as a variable in events.cfg
-
-		if plugin_dir == 5:
-			# Update variables
-			weekday = True if 0 <= now.weekday() < 5 else False
-			monday = True if now.weekday() == 0 else False
-			tuesday = True if now.weekday() == 1 else False
-			wednesday = True if now.weekday() == 2 else False
-			thursday = True if now.weekday() == 3 else False
-			friday = True if now.weekday() == 4 else False
-			saturday = True if now.weekday() == 5 else False
-			sunday = True if now.weekday() == 6 else False
-			january = True if now.month == 1 else False
-			february = True if now.month == 2 else False
-			march = True if now.month == 3 else False
-			april = True if now.month == 4 else False
-			may = True if now.month == 5 else False
-			june = True if now.month == 6 else False
-			july = True if now.month == 7 else False
-			august = True if now.month == 8 else False
-			september = True if now.month == 9 else False
-			october = True if now.month == 10 else False
-			november = True if now.month == 11 else False
-			december = True if now.month == 12 else False
-
-		###Get data from the plugins
-		plugin_data = get_plugin_data.data(plugin_dirs, first_run, logger, plugin_data, plugin_dir)
-		plugin_dir = 1
-#		logger.debug("Plugin data: {0}".format(plugin_data))
+		timestamp = now.strftime("%Y-%m-%d") + "  " + now.strftime("%H:%M")
 
 		# Re-build the event expressions each time there is new plug-in data or at first run.
-		if (plugin_data_old != plugin_data) or first_run:
-			plugin_data_old = {}
-			for key in plugin_data:
-				plugin_data_old[key] = plugin_data[key]
-			# Read the expressions for on
-			for key in confev.sections():
-				try:
-					que[key] = confev[key]["id"] + ";" + confev[key]["on"]
-					# Replace e.g. 22:30 with '22:30'
-					que[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que[key])
-					# Replace e.g. ping:sven with ping['sven']
-					que[key] = re.sub(r'(ping:)([A-Za-z0-9\-\_]+)', r"ping['\2']", que[key])
-					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
-					for pkey in plugin_data.keys():
-						if pkey in que[key]:
-							que[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que[key])
-							que[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que[key])
-							que[key] = re.sub(r"'+", r"'", que[key])
-				except KeyError:
-					pass
-
-			# Read the expressions for only_on
-			for key in confev.sections():
-				try:
-					que_only_on[key] = confev[key]["id"] + ";" + confev[key]["only_on"]
-					que_only_on[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_only_on[key])
-					que_only_on[key] = re.sub(r'(ping:)([A-Za-z0-9\-\_]+)', r"ping['\2']", que_only_on[key])
-					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
-					for pkey in plugin_data.keys():
-						if pkey in que_only_on[key]:
-							que_only_on[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que_only_on[key])
-							que_only_on[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_only_on[key])
-							que_only_on[key] = re.sub(r"'+", r"'", que_only_on[key])
-				except KeyError:
-					pass
-
-			# Read the expressions for only_off
-			for key in confev.sections():
-				try:
-#					que_only_off[key] = confev[key]["id"] + ";" + rand_offset.calc(confev[key]["only_off"], random[key], sunrise, sunset)
-					que_only_off[key] = confev[key]["id"] + ";" + confev[key]["only_off"]
-					que_only_off[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_only_off[key])
-					que_only_off[key] = re.sub(r'(ping:)([A-Za-z0-9\-\_]+)', r"ping['\2']", que_only_off[key])
-					# In event definition, replace variable name from plugins with "plugin_data['variable name']"
-					for pkey in plugin_data.keys():
-						if pkey in que_only_off[key]:
-							que_only_off[key] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que_only_off[key])
-							que_only_off[key] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_only_off[key])
-							que_only_off[key] = re.sub(r"'+", r"'", que_only_off[key])
-				except KeyError:
-					pass
-
-			# Read the expressions for dim_<0-100>
-			for key in confev.sections():	#key = aquarium etc
-				try:
-					for value in confev.options(key):	#för varje option (t ex dim_25, only_on etc)
-						match = re.match(r'(dim_)(\d{1,3})', value)
-						if match:
-#							print(confev[key]["id"] + ";" + confev[key][value] + ";" + match.group(2) + ";" + key)
-							que_dim[key + value] = confev[key]["id"] + ";" + confev[key][value] + ";" + match.group(2) + ";" + key
-							que_dim[key + value] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_dim[key + value])
-							que_dim[key + value] = re.sub(r'(ping:)([A-Za-z0-9\-\_]+)', r"ping['\2']", que_dim[key + value])
-							# In event definition, replace variable name from plugins with "plugin_data['variable name']"
-							for pkey in plugin_data.keys():
-								if pkey in que_dim[key + value]:
-									que_dim[key + value] = re.sub("\\b" + pkey + "\\b", plugin_data[pkey], que_dim[key + value])
-									que_dim[key + value] = re.sub(r'([0-2][0-9]:[0-5][0-9])', r"'\1'", que_dim[key + value])
-									que_dim[key + value] = re.sub(r"'+", r"'", que_dim[key + value])
-				except KeyError:
-					pass
-
-		# Operate switches, if there's time for a change
-		# On
-		for item in que:
-			try:
-				state = eval(que[item].split(';')[1])
-			except:
-				logging.exception("Error while evaluating que")
-				print("Error while evaluating que. Check your event definitions for on.")
-				traceback.print_exc()
-				sys.exit()
-			logger.debug("{0}, {1}, {2}".format(item, str(state), que[item].split(';')[1]))
-			if str(state) != old_state[item].split(';')[1]:
-				sstate = "--on" if state else "--off"
-				cmd = "tdtool " + sstate + " " + que[item].split(';')[0] + " > /dev/null"
-				logger.info("State change: que {0} {1}".format(item, sstate.replace('-', '')))
-				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + sstate.replace('-', ''))
-
-				with open("/run/shm/data/" + "switch_" + item, "w") as f:
-					f.write(sstate.replace('-', ''))
-
-				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
-				thread[item].start()
-			old_state[item] = que[item].split(';')[0] + ";" + str(state)
-
-		# Only on
-		for item in que_only_on:
-			try:
-				state = eval(que_only_on[item].split(';')[1])
-			except:
-				logging.exception("Error while evaluating que_only_on")
-				print("Error while evaluating que_only_on. Check your event definitions for only_on.")
-				traceback.print_exc()
-				sys.exit()
-			logger.debug("{0}, {1}, {2}".format(item, str(state), que_only_on[item].split(';')[1]))
-			if state:
-				logger.info("State change: que_only_on {0} on", item)
-				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "on")
-
-				with open("/run/shm/data/" + "switch_" + item, "w") as f:
-					f.write(sstate.replace('-', ''))
-
-				cmd = "tdtool --on " + que_only_on[item].split(';')[0] + " > /dev/null"
-				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
-				thread[item].start()
-	
-        # Only off
-		for item in que_only_off:
-			try:
-				state = eval(que_only_off[item].split(';')[1])
-			except:
-				logging.exception("Error while evaluating que_only_off")
-				print("Error while evaluating que_only_off. Check your event definitions for only_off.")
-				traceback.print_exc()
-				sys.exit()
-			logger.debug("{0}, {1}, {2}".format(item, str(state), que_only_off[item].split(';')[1]))
-			if state:
-				logger.info("State change: que_only_off {0} off".format(item))
-				print(now.strftime("%Y-%m-%d %H:%M") + "\t" + item + " " * (24 - len(item)) + "off")
-
-				with open("/run/shm/data/" + "switch_" + item, "w") as f:
-					f.write(sstate.replace('-', ''))
-
-				cmd = "tdtool --off " + que_only_off[item].split(';')[0] + " > /dev/null"
-				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
-				thread[item].start()
-
-
-		# Dim
-		for item in que_dim:
-			dimmer[que_dim[item].split(';')[0]] = 0  # All dim values for all id's are set to zero
-		for item in que_dim:
-			try:
-				#For each item (e.g. lampdim_10), dimmer[id] = the value, if the expression if true, otherwise unchanged
-				if eval(que_dim[item].split(';')[1]):
-					if int(dimmer[que_dim[item].split(';')[0]]) < int(que_dim[item].split(';')[2]):
-						dimmer[que_dim[item].split(';')[0]] = que_dim[item].split(';')[2] 
-			except:
-				logging.exception("Error while evaluating que_dim")
-				print("Error while evaluating que_dim. Check your event definitions for dim.")
-				traceback.print_exc()
-				sys.exit()
-
-		if first_run:
-			dimmer_old = dimmer.copy()
-		
-		for idno in dimmer:
-			if (dimmer[idno] != dimmer_old[idno]) or first_run:
-				if (dimmer[idno] != 0):
-					logger.info("State change: dimmer id {0} set to {1}".format(idno, dimmer[idno]))
-					cmd = "tdtool --dimlevel " + str(dimmer[idno]) + " --dim " + idno + " > /dev/null"
-					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + idno + " " * (24 - len(item)) + "dim " + str(dimmer[idno]))
-				else:
-					logger.info("State change: dimmer id {0} set to {1}".format(idno, dimmer[idno]))
-					cmd = "tdtool --off " + idno + " > /dev/null"
-					print(now.strftime("%Y-%m-%d %H:%M") + "\t" + idno + " " * (24 - len(item)) + "off")
-
-				thread[item] = Thread(target=operate_switch.switch, args=(confprg,cmd,sim,))
-				thread[item].start()
-
-		dimmer_old = dimmer.copy()
-
-		first_run = False
-		
-#		while now.strftime("%M") == datetime.now().strftime("%M"):
-#			time.sleep(1)
-		time.sleep(turnaround_time)
+		if (plugin_data_old != plugin_data):
+			plugin_data_old.clear()
+			plugin_data_old.update(plugin_data)
+		# Update the objects with new data. The objects decides if their states are to be changed
+		for count in range(len(objectlist)):
+			cmd = objectlist[count].update(timestamp, t, plugin_data)
+			if cmd:
+				Thread(target = operate_switch, args = (cmd, transmits, sim)).start()
 
 if __name__ == "__main__":
-    main()
+	main()

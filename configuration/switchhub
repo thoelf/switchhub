@@ -1,16 +1,15 @@
 [logging]
 log_level = WARNING
-
-[misc]
 event_config = /etc/switchhub/
-repeats = 3
+transmits = 2
+receive_buf = 4096
+port = 8001
+wait for plugins = 12
 
-[ping_ip]
-phone = 192.168.1.140
-
-[timer]
-ping_off_delay = 10
-turn_around = 60
-
-
-
+[plugins]
+#calendar_data = /opt/switchhub/plugins/calendar_data.py
+#ping = /opt/switchhub/plugins/ping.py
+#readfile = /opt/switchhub/plugins/readfile.py
+#suntime = /opt/switchhub/plugins/suntime.py
+#sensor_receiver = /opt/switchhub/plugins/sensor_receiver.py
+#weather = /opt/switchhub/plugins/weather.py

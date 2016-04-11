@@ -32,7 +32,6 @@ INSTALL_DIR=/opt/switchhub
 PLUGINS_DIR=/opt/switchhub/plugins
 LOG_FILE=/var/log/switchhub.log
 SETTINGS_DIR=/etc/switchhub
-SETTINGS_DIR_PLUGINS=/etc/switchhub/plugins
 STARTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 USER=$(logname)
 
@@ -71,41 +70,17 @@ cp ./configuration/events ./configuration/switchhub "$SETTINGS_DIR"
 chgrp -R switchhub "$SETTINGS_DIR"
 chmod -R g+w "$SETTINGS_DIR"
 
-mkdir -p "$SETTINGS_DIR_PLUGINS"
-cp ./configuration/calendar ./configuration/calendar_free_days ./configuration/calendar_holidays ./configuration/suntime ./configuration/readfile "$SETTINGS_DIR_PLUGINS"
-chgrp -R switchhub "$SETTINGS_DIR_PLUGINS"
-chmod -R g+w "$SETTINGS_DIR_PLUGINS"
-
 mkdir -p "$INSTALL_DIR"
 chgrp switchhub "$INSTALL_DIR"
 chmod g+w "$INSTALL_DIR"
 
 mkdir -p "$PLUGINS_DIR"
-cp ./plugins/suntime.py ./plugins/cal.py ./plugins/readfile.py "$PLUGINS_DIR"
+cp ./plugins/calendar_data.py ./plugins/ping.py ./plugins/readfile.py ./plugins/sensor_receiver.py "$PLUGINS_DIR"
+cp ./plugins/signal_receiver.php ./plugins/suntime.py ./plugins/weather.py "$PLUGINS_DIR"
 chgrp -R switchhub "$PLUGINS_DIR"
 chmod -R g+w "$PLUGINS_DIR"
 
-mkdir -p "$PLUGINS_DIR"/every_time
-chgrp switchhub "$PLUGINS_DIR"/every_time
-chmod g+w "$PLUGINS_DIR"/every_time
-
-mkdir -p "$PLUGINS_DIR"/1minute
-chgrp switchhub "$PLUGINS_DIR"/1_minute
-chmod g+w "$PLUGINS_DIR"/1minute
-
-mkdir -p "$PLUGINS_DIR"/15minutes
-chgrp switchhub "$PLUGINS_DIR"/15_minutes
-chmod g+w "$PLUGINS_DIR"/15minutes
-
-mkdir -p "$PLUGINS_DIR"/hour
-chgrp switchhub "$PLUGINS_DIR"/hour
-chmod g+w "$PLUGINS_DIR"/1hour
-
-mkdir -p "$PLUGINS_DIR"/1day
-chgrp switchhub "$PLUGINS_DIR"/day
-chmod g+w "$PLUGINS_DIR"/1day
-
-cp switchhub.py get_plugin_data.py operate_switch.py SwitchHub.pdf switchhub.sh LICENSE $INSTALL_DIR
+cp switchhub.py SwitchHub.pdf switchhub.sh LICENSE $INSTALL_DIR
 
 chgrp -R switchhub "$INSTALL_DIR"/*
 chmod -R g+w "$INSTALL_DIR"/*

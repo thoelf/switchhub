@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright 2016 Thomas Elfström
-# readfile.py
+# weather.py
 
 ''' This file is part of SwitchHub.
 
@@ -19,33 +19,38 @@ You should have received a copy of the GNU General Public License
 along with SwitchHub. If not, see <http://www.gnu.org/licenses/>. '''
 
 
+import json
 import os
-import os.path
+import re
+from urllib.request import urlopen
 import socket
-import sys
 import time
 
 
 def main():
-	files = {'party': '/run/shm/data/party'}
-	default = {'party': 'False'}
-	server_address = ('localhost', 8001)
-	read_interval = 60
-
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.connect(server_address)
+	weather_data_url = "http://api.wunderground.com/api/<your API key goes here>/conditions/q/Sweden/Linkoping.json"
+	var_Weather = "Clear"  # Assume clear weather
+	weather_interval = 900
 
 	ownfile = os.path.basename(__file__)
 
-	while True:
-		for key in files:
-			if os.path.isfile(files[key]):
-				with open(files[key], "r") as f:
-					message = ownfile + ";" + key + ";" + f.readline()
-			else:
-				message = ownfile + ";" + key + ";" + default[key]
-			s.send(bytes(message + "\n", 'UTF-8'))
-		time.sleep(read_interval)
+	server_address = ('localhost', 8001)
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect(server_address)
+
+	try:
+		data = urlopen(weather_data_url, timeout = 10).read().decode('utf-8')
+	except:
+		pass
+
+	try:
+		theJSON = json.loads(data)
+		var_Weather =  theJSON['current_observation']['weather']
+	except:
+		pass
+
+	s.send(bytes(ownfile + ";weather;{0}".format(var_Weather) + "\n", 'UTF-8'))
+	time.sleep(weather_interval)
 
 if __name__ == "__main__":
 	main()
