@@ -26,7 +26,7 @@ from urllib.request import urlopen
 
 
 def main():
-    weather_data_url = "http://api.wunderground.com/api/<your api key>/conditions/q/Sweden/Linkoping.json"
+    weather_data_url = "http://api.wunderground.com/api/c6b1cd38e53fb67d/conditions/q/Sweden/Linkoping.json"
     var_Weather = "Clear"  # Assume clear weather
     weather_interval = 900
 

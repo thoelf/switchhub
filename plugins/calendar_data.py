@@ -53,11 +53,11 @@ def main():
                 "annandag jul",
                 "nyårsafton")
 
-    free_days = ("2016-05-06",
-                "2016-07-11:2016-08-12")
+    free_days = ("2017-06-05",
+                "2017-05-26")
 
 
-    calurl = "http://www.webcal.fi/cal.php?id=230&format=json&start_year=current_year&end_year=current_year&tz=Europe%%2FStockholm"
+    calurl = "http://www.webcal.fi/cal.php?id=231&format=json&start_year=current_year&end_year=current_year&tz=Europe%2FStockholm"
 
     server_address = ('localhost', 8001)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

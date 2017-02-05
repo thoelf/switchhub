@@ -44,6 +44,7 @@ class switch:
         self.state = 0
         self.old_state = None
         self.eventsd = {}
+        self.dim_state_old = 0
 #		for key in self.events.keys():
 #			self.eventsd.update({key: events[key]})  # eventsd är dict med t ex 'on' och 'dim_50' som keys. data är eventuttryck
 #		key_temp = {}
@@ -153,7 +154,7 @@ class switch:
                 self.state = 0
 
         cmd = ""
-        if self.state != self.old_state:
+        if self.state != self.old_state or self.state == 4 and self.dim_state_old != dim:
             if self.state == 0:
                 print(timestamp + "  " + self.name + " " * (20 - len(self.name)) + " waiting")
             elif self.state == 2 or self.state == 3:
@@ -162,6 +163,7 @@ class switch:
             elif self.state == 4:
                 cmd = "tdtool --dimlevel " + str(dim) + " --dim " + self.idno + " > /dev/null"
                 print(timestamp + "  " + self.name + " " * (20 - len(self.name)) + " dim " + str(dim))
+                self.dim_state_old = dim
             else:  # elif self.state == 1 or self.state == 5:
                 cmd = "tdtool --off " + self.idno + " > /dev/null"
                 print(timestamp + "  " + self.name + " " * (20 - len(self.name)) + " off")
@@ -174,7 +176,7 @@ class switch:
 def main():
 
     print("\n********************** \033[92mSWITCHHUB\033[0m **********************\n")
-    print("If you started SwitchHub with 'switchhub.sh start',\npress 'Ctrl+A D' to detach SwitchHub from the terminal.\n")
+    print("If you started SwitchHub with 'switchhub.sh',\npress 'Ctrl+A D' to detach SwitchHub from the terminal.\n")
 
     # Initialize config parser for program.cfg
     confprg = configparser.ConfigParser(allow_no_value = True)
