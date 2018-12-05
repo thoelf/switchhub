@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright 2016 Thomas Elfström
+# Copyright 2017 Thomas Elfström
 # switchhub.py
 
 ''' This file is part of SwitchHub.
@@ -45,20 +45,6 @@ class switch:
         self.old_state = None
         self.eventsd = {}
         self.dim_state_old = 0
-#		for key in self.events.keys():
-#			self.eventsd.update({key: events[key]})  # eventsd är dict med t ex 'on' och 'dim_50' som keys. data är eventuttryck
-#		key_temp = {}
-#		for key in self.eventsd.keys():  # byt namn på keys
-#			if key == "only_on":
-#				key_temp.update({key: "1001"})
-#			elif key == "on":
-#				key_temp.update({key: "1000"})
-#			elif key == "only_off":
-#				key_temp.update({key: "0"})
-#			else:
-#				key_temp.update({key: re.sub(r'dim_', "", key)})
-#		for key in key_temp.keys():
-#			self.eventsd[key_temp[key]] = self.eventsd.pop(key)
 
     def update(self, timestamp, t, plugin_data):
         for key in self.events.keys():
@@ -89,12 +75,10 @@ class switch:
         dim_old = 0
         dim = 0
         only_off = False
-#		for key in sorted(self.eventsd):
         for key in self.eventsd:
             if key == "1001" and eval(self.eventsd[key]):
                 only_on = True
             elif key == "1000" and eval(self.eventsd[key]):
-#				print(key, eval(self.eventsd[key]), self.eventsd[key])
                 on = True
             elif (1 <= int(key) <= 999) and eval(self.eventsd[key]) and int(key) > int(dim_old):
                 dim = key
